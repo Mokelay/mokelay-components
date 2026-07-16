@@ -257,6 +257,7 @@ watch(() => [props.values, props.defaultValues], syncRuntimeValuesFromProps, { d
         <template v-for="(item, index) in previewItems" :key="`${item.variableName}-${index}`">
           <MFormItem
             v-if="!isFormItemHidden(item)"
+            class="ce-form-tool__item"
             :edit="edit"
             :label-name="item.labelName"
             :variable-name="item.variableName"
@@ -282,5 +283,16 @@ watch(() => [props.values, props.defaultValues], syncRuntimeValuesFromProps, { d
 .ce-form-tool--horizontal .ce-form-tool__preview { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 .ce-form-tool--horizontal .ce-form-tool__actions { grid-column: 1 / -1; }
 .ce-form-tool--horizontal.ce-form-tool--compact-items .ce-form-tool__preview { display: flex; flex-flow: row wrap; align-items: flex-start; }
+.ce-form-tool--horizontal.ce-form-tool--compact-items .ce-form-tool__item { width: auto; min-width: 220px; flex: 1 1 220px; }
+.ce-form-tool--horizontal.ce-form-tool--compact-items .ce-form-tool__actions { flex: 0 0 auto; align-self: center; margin-top: 0; }
 .dark .ce-form-tool { color: rgb(226 232 240); }
+
+@media (max-width: 640px) {
+  .ce-form-tool--horizontal.ce-form-tool--compact-items .ce-form-tool__item,
+  .ce-form-tool--horizontal.ce-form-tool--compact-items .ce-form-tool__actions {
+    width: 100%;
+    min-width: 100%;
+    flex-basis: 100%;
+  }
+}
 </style>

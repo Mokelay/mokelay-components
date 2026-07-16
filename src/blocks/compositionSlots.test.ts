@@ -47,6 +47,36 @@ describe('runtime block composition slots', () => {
     expect(wrapper.classes()).toContain('ce-form-item-tool--horizontal');
   });
 
+  it('lays compact horizontal form items out as flexible columns', () => {
+    const wrapper = mount(MForm, {
+      props: {
+        edit: false,
+        layout: 'Horizontal',
+        itemWidthMode: 'compact',
+        items: [
+          {
+            labelName: '关键词',
+            variableName: 'keyword',
+            layout: 'Horizontal',
+            editor: { id: 'keyword-input', type: 'MInput', data: {} }
+          },
+          {
+            labelName: '分类',
+            variableName: 'category',
+            layout: 'Horizontal',
+            editor: { id: 'category-input', type: 'MInput', data: {} }
+          }
+        ]
+      }
+    });
+
+    expect(wrapper.classes()).toContain('ce-form-tool--horizontal');
+    expect(wrapper.classes()).toContain('ce-form-tool--compact-items');
+    const items = wrapper.findAll('.ce-form-tool__item');
+    expect(items).toHaveLength(2);
+    expect(items.every((item) => item.element.parentElement?.classList.contains('ce-form-tool__preview'))).toBe(true);
+  });
+
   it('keeps responsive grid calculation in the runtime package while exposing area contents', () => {
     const wrapper = mount(MLayoutGrid, {
       props: {
