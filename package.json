@@ -1,0 +1,116 @@
+{
+  "name": "mokelay-components",
+  "version": "0.2.3",
+  "description": "Runtime rendering components, processors and actions for Mokelay DSL",
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "yarn@4.12.0",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js"
+    },
+    "./blocks": {
+      "types": "./dist/blocks/index.d.ts",
+      "import": "./dist/blocks/index.js"
+    },
+    "./blocks/*": {
+      "types": "./dist/blocks/*.d.ts",
+      "import": "./dist/blocks/*.js"
+    },
+    "./processors": {
+      "types": "./dist/processors/index.d.ts",
+      "import": "./dist/processors/index.js"
+    },
+    "./processors/*": {
+      "types": "./dist/processors/*.d.ts",
+      "import": "./dist/processors/*.js"
+    },
+    "./actions": {
+      "types": "./dist/actions/index.d.ts",
+      "import": "./dist/actions/index.js"
+    },
+    "./actions/*": {
+      "types": "./dist/actions/*.d.ts",
+      "import": "./dist/actions/*.js"
+    },
+    "./datasource": {
+      "types": "./dist/datasource/index.d.ts",
+      "import": "./dist/datasource/index.js"
+    },
+    "./pages": {
+      "types": "./dist/pages/index.d.ts",
+      "import": "./dist/pages/index.js"
+    },
+    "./layouts": {
+      "types": "./dist/layouts/index.d.ts",
+      "import": "./dist/layouts/index.js"
+    },
+    "./layouts/*": {
+      "types": "./dist/layouts/*.d.ts",
+      "import": "./dist/layouts/*.js"
+    },
+    "./global-calls": {
+      "types": "./dist/global-calls.d.ts",
+      "import": "./dist/global-calls.js"
+    },
+    "./global-settings": {
+      "types": "./dist/global-settings.d.ts",
+      "import": "./dist/global-settings.js"
+    },
+    "./style.css": "./dist/mokelay-components.css"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "build": "vite build && vue-tsc -p tsconfig.build.json && node scripts/fix-declarations.mjs",
+    "pack:check": "npm run build && npm pack --dry-run",
+    "release:minor": "npm run pack:check && npm publish --access public",
+    "publish:npm": "npm version patch --no-git-tag-version && npm run pack:check && npm publish --access public"
+  },
+  "peerDependencies": {
+    "@vue-flow/core": "^1.48.2",
+    "axios": "^1.8.1",
+    "echarts": "^6.0.0",
+    "element-ui": "npm:element-plus@^2.14.0",
+    "json-editor-vue": "^0.18.1",
+    "qrcode": "^1.5.4",
+    "vanilla-jsoneditor": "^3.6.1",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "@types/qrcode": "^1.5.6",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue-flow/core": "^1.48.2",
+    "@vue/test-utils": "^2.4.11",
+    "@vue/tsconfig": "^0.7.0",
+    "axios": "^1.8.1",
+    "echarts": "^6.0.0",
+    "element-ui": "npm:element-plus@^2.14.0",
+    "happy-dom": "^20.10.6",
+    "json-editor-vue": "^0.18.1",
+    "qrcode": "^1.5.4",
+    "typescript": "~5.7.2",
+    "vanilla-jsoneditor": "^3.6.1",
+    "vite": "^6.1.0",
+    "vitest": "^3.2.4",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.2.2"
+  }
+}
