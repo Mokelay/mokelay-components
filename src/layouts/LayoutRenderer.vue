@@ -27,6 +27,7 @@ const previewRuntime = createPreviewBlockRuntime();
 const resources = ref<LayoutRuntimeContext['resources']>({});
 const auth = ref<LayoutAuthState>(createEmptyAuthState());
 const runtimeError = ref('');
+const runtimePending = ref(true);
 let loadRequestId = 0;
 
 provide(PreviewBlockRuntimeKey, previewRuntime);
@@ -55,6 +56,7 @@ async function loadRuntimeContext() {
   const requestId = loadRequestId + 1;
   loadRequestId = requestId;
   runtimeError.value = '';
+  runtimePending.value = true;
   auth.value = {
     ...createEmptyAuthState(),
     pending: props.layout.auth?.enabled === true
@@ -69,11 +71,13 @@ async function loadRuntimeContext() {
     if (requestId !== loadRequestId) return;
     resources.value = nextResources;
     auth.value = nextAuth;
+    runtimePending.value = false;
   } catch (error) {
     if (requestId !== loadRequestId) return;
     resources.value = {};
     auth.value = createEmptyAuthState();
     runtimeError.value = error instanceof Error ? error.message : 'Layout runtime failed.';
+    runtimePending.value = false;
   }
 }
 
@@ -92,10 +96,11 @@ onBeforeUnmount(() => {
 
 <template>
   <section data-testid="layout-renderer" class="layout-renderer">
+    <span v-if="runtimePending" data-testid="layout-runtime-loading" class="layout-renderer__loading" aria-label="Loading layout"></span>
     <p v-if="runtimeError" data-testid="layout-runtime-error" class="layout-renderer__error">{{ runtimeError }}</p>
 
     <div
-      v-for="(block, index) in layout.blocks"
+      v-for="(block, index) in runtimePending || runtimeError ? [] : layout.blocks"
       :key="block.id || `${block.type}-${index}`"
       :class="getBlockClass(block)"
       :data-layout-block-type="block.type"
@@ -144,6 +149,11 @@ onBeforeUnmount(() => {
   margin: 0;
   padding: 10px 16px;
   font-size: 13px;
+}
+
+.layout-renderer__loading {
+  display: block;
+  min-height: 1px;
 }
 
 .dark .layout-renderer {
