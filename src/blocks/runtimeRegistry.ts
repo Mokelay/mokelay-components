@@ -10,6 +10,8 @@ type BlockModule = {
   [key: string]: unknown;
 };
 
+// Runtime Block 的唯一注册表。文档扫描器会将这里的类型与 Editor tool 中的
+// @clientBlockDoc 逐一校验：渲染实现归 mokelay-components，编辑元数据仍归 mokelay-editor。
 const builtInLoaders: Record<string, () => Promise<BlockModule>> = {
   MActionCardList: () => import('./MActionCardList.vue'),
   MActionToolbar: () => import('./MActionToolbar.vue'),

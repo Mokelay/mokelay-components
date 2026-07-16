@@ -21,6 +21,7 @@ function matchesCondition(item: unknown, condition: FilterCondition) {
 /**
  * @clientProcessorDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "processorName": "filter",
  *   "displayName": "数组筛选",
  *   "category": "array",

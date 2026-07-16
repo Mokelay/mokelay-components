@@ -16,6 +16,7 @@ function pad(value: number) {
 /**
  * @clientProcessorDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "processorName": "date_time_format",
  *   "displayName": "日期时间格式化",
  *   "category": "format",

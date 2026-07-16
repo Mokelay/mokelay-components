@@ -187,6 +187,7 @@ function invalidRequest(
 /**
  * @clientProcessorDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "processorName": "ai_dsl_request_context",
  *   "displayName": "组装 AI DSL 请求上下文",
  *   "category": "ai",

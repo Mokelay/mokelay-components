@@ -3,6 +3,7 @@ import type { ProcessorExecutor } from '@/processors/types';
 /**
  * @clientProcessorDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "processorName": "trim",
  *   "displayName": "去除首尾空格",
  *   "category": "string",

@@ -254,6 +254,7 @@ async function uploadWithOssToken(file: File, inputs: Record<string, unknown>, s
 /**
  * @clientActionDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "actionName": "execute_ds",
  *   "displayName": "执行数据源",
  *   "actionType": "action",
@@ -296,6 +297,7 @@ export const executeDatasourceAction: ActionExecutor = async ({ inputs, state })
 /**
  * @clientActionDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "actionName": "confirm",
  *   "displayName": "确认提示",
  *   "actionType": "action",
@@ -321,6 +323,7 @@ export const confirmAction: ActionExecutor = async ({ inputs }) => {
 /**
  * @clientActionDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "actionName": "open_dialog",
  *   "displayName": "打开页面弹窗",
  *   "actionType": "action",
@@ -351,6 +354,7 @@ export const openDialogAction: ActionExecutor = async ({ inputs, state }) => {
 /**
  * @clientActionDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "actionName": "jump_url",
  *   "displayName": "跳转地址",
  *   "actionType": "action",
@@ -383,6 +387,7 @@ export const jumpUrlAction: ActionExecutor = ({ inputs }) => {
 /**
  * @clientActionDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "actionName": "call_block_method",
  *   "displayName": "调用 Block 方法",
  *   "actionType": "action",
@@ -412,6 +417,7 @@ export const callBlockMethodAction: ActionExecutor = async ({ config, inputs, ca
 /**
  * @clientActionDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "actionName": "close_dialog",
  *   "displayName": "关闭页面弹窗",
  *   "actionType": "action",
@@ -479,6 +485,7 @@ export const closeDialogAction: ActionExecutor = async ({ inputs, state, callBlo
 /**
  * @clientActionDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "actionName": "upload_file",
  *   "displayName": "上传文件",
  *   "actionType": "action",
@@ -544,6 +551,7 @@ export const uploadFileAction: ActionExecutor = async ({ inputs, state }) => {
 /**
  * @clientActionDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "actionName": "download_blob",
  *   "displayName": "下载文件",
  *   "actionType": "action",

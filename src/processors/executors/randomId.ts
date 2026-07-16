@@ -83,6 +83,7 @@ export function readRandomIdParam(param: unknown): RandomIdParam {
 /**
  * @clientProcessorDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "processorName": "random_id",
  *   "displayName": "生成随机 ID",
  *   "category": "string",

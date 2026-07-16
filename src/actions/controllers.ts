@@ -21,6 +21,7 @@ function requireControllerNodes(config: ActionConfig) {
 /**
  * @clientActionDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "actionName": "if_controller",
  *   "displayName": "条件分支",
  *   "actionType": "controller",
@@ -51,6 +52,7 @@ export function selectIfControllerNode(config: ActionConfig, inputs: Record<stri
 /**
  * @clientActionDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "actionName": "switch_controller",
  *   "displayName": "条件匹配",
  *   "actionType": "controller",

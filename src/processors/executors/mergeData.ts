@@ -13,6 +13,7 @@ export function readMergeDataParam(param: unknown) {
 /**
  * @clientProcessorDoc {
  *   "version": "1.0",
+ *   "sourcePackage": "mokelay-components",
  *   "processorName": "merge_data",
  *   "displayName": "合并数据",
  *   "category": "object",
