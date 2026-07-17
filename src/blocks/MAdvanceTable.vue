@@ -671,7 +671,8 @@ function getCellBlockEventListeners(block: StoredBlock) {
       previewRuntime?.invokeBlockActions(eventConfig, {
         ...block,
         data: getBoundCellBlockData(block),
-        _pageAncestry: [...pageReferenceAncestry.value]
+        _pageAncestry: [...pageReferenceAncestry.value],
+        _variableContext: pageVariableContext.value
       } as PreviewRuntimeBlock, event);
     };
   });

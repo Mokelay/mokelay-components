@@ -283,7 +283,8 @@ const blockEventListeners = computed(() => {
       previewRuntime?.invokeBlockActions(eventConfig, {
         ...props.block,
         data: resolvedBlockData.value,
-        _pageAncestry: [...pageReferenceAncestry.value]
+        _pageAncestry: [...pageReferenceAncestry.value],
+        _variableContext: getVariableResolveContext()
       } as PreviewRuntimeBlock & { _pageAncestry: string[] }, event);
     };
   });

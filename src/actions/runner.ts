@@ -46,7 +46,10 @@ function createBaseContext(
   event: unknown,
   blocks: Record<string, Record<string, unknown>>
 ): ActionContext {
+  const variableContext = sourceBlock._variableContext ?? {};
   return {
+    context: variableContext.context,
+    data: variableContext.pageData,
     actions: {},
     blocks,
     event,

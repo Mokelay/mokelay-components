@@ -178,6 +178,8 @@ import {
   type PreviewRuntimeBlock
 } from '@/runtime/previewBlockRuntime';
 import { PageReferenceAncestryKey } from '@/pages/referenceRuntime';
+import { PageRuntimeVariableContextKey } from '@/pages/runtimeContext';
+import type { VariableValueResolveContext } from '@/runtime/variableValue';
 import { $message } from '@/components/global-calls/globalCalls';
 import type { PageDslCallbacks } from '@/blocks/pageDslRuntime';
 
@@ -197,6 +199,7 @@ const emit = defineEmits<{
 const rootRef = ref<HTMLElement | null>(null);
 const previewRuntime = inject(PreviewBlockRuntimeKey, null);
 const pageReferenceAncestry = inject(PageReferenceAncestryKey, computed<readonly string[]>(() => []));
+const pageVariableContext = inject(PageRuntimeVariableContextKey, computed<VariableValueResolveContext>(() => ({})));
 const loadingState = ref<Record<string, boolean>>({});
 const disabledState = ref<Record<string, boolean>>({});
 const openMenuId = ref('');
@@ -305,7 +308,8 @@ function createButtonSourceBlock(button: ToolbarButton): PreviewRuntimeBlock {
     type: 'MButton',
     data: getButtonData(button),
     events: cloneBlockEvents(button.events),
-    _pageAncestry: [...pageReferenceAncestry.value]
+    _pageAncestry: [...pageReferenceAncestry.value],
+    _variableContext: pageVariableContext.value
   };
 }
 

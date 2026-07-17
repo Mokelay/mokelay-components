@@ -1,5 +1,6 @@
 import type { MokelayBlock } from '@/blocks/types';
 import type { ProcessorConfig } from '@/processors';
+import type { VariableValueResolveContext } from '@/runtime/variableValue';
 
 export type CommonActionName =
   | 'execute_ds'
@@ -53,7 +54,10 @@ export type ActionContext = {
     events?: unknown;
   }) & {
     _pageAncestry?: readonly string[];
+    _variableContext?: VariableValueResolveContext;
   };
+  context?: Record<string, unknown>;
+  data?: Record<string, unknown>;
   now: string;
 };
 

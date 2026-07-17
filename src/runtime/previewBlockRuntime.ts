@@ -4,6 +4,7 @@ import type { BlockEvent } from '@/blocks/blockEvents';
 import type { ActionConfig, ActionContext } from '@/actions/types';
 import { runActionGraph } from '@/actions/runner';
 import { $message } from '@/components/global-calls/globalCalls';
+import type { VariableValueResolveContext } from '@/runtime/variableValue';
 
 export type PreviewRuntimeBlock = (MokelayBlock | {
   id?: string;
@@ -12,6 +13,7 @@ export type PreviewRuntimeBlock = (MokelayBlock | {
   events?: BlockEvent[];
 }) & {
   _pageAncestry?: readonly string[];
+  _variableContext?: VariableValueResolveContext;
 };
 
 export type BlockRuntimeHandle = {

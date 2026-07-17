@@ -200,13 +200,18 @@ function getDatasourceFileIndex(datasource: MDatasourceApiObject) {
   return datasource.bodyData.findIndex((item) => item.dataType === 'file');
 }
 
+function getActionVariableContext(state: Parameters<ActionExecutor>[0]['state']) {
+  return {
+    ...(state.sourceBlock._variableContext ?? {}),
+    blocks: state.blocks
+  };
+}
+
 async function uploadToDatasource(file: File, datasource: MDatasourceApiObject, state: Parameters<ActionExecutor>[0]['state']) {
   const fileIndex = getDatasourceFileIndex(datasource);
   const runtimeData = await resolveDatasourceRuntimeData(datasource, {
     bodyFiles: fileIndex >= 0 ? { [fileIndex]: file } : undefined,
-    variableContext: {
-      blocks: state.blocks
-    }
+    variableContext: getActionVariableContext(state)
   });
   return runtimeData.rawResponse;
 }
@@ -214,9 +219,7 @@ async function uploadToDatasource(file: File, datasource: MDatasourceApiObject, 
 async function uploadWithOssToken(file: File, inputs: Record<string, unknown>, state: Parameters<ActionExecutor>[0]['state']) {
   const tokenDatasource = datasourceInput(inputs.tokenDatasource);
   const tokenRuntimeData = await resolveDatasourceRuntimeData(tokenDatasource, {
-    variableContext: {
-      blocks: state.blocks
-    }
+    variableContext: getActionVariableContext(state)
   });
   const tokenResponse = tokenRuntimeData.rawResponse;
   const uploadUrl = firstStringPath(tokenResponse, ['uploadUrl', 'data.uploadUrl', 'result.uploadUrl']);
@@ -273,9 +276,7 @@ async function uploadWithOssToken(file: File, inputs: Record<string, unknown>, s
 export const executeDatasourceAction: ActionExecutor = async ({ inputs, state }) => {
   const dsConfig = datasourceInput(inputs.dsConfig ?? inputs.value ?? inputs);
   const runtimeData = await resolveDatasourceRuntimeData(dsConfig, {
-    variableContext: {
-      blocks: state.blocks
-    }
+    variableContext: getActionVariableContext(state)
   });
   const failureMessage = mokelayFailureMessage(runtimeData.rawResponse);
   if (failureMessage) {
