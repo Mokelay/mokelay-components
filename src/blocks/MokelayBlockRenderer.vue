@@ -116,6 +116,9 @@ function isDatasourceConfig(value: unknown) {
 }
 
 function shouldKeepDatasourceRuntimeConfig(blockType: string, propName: string, value: unknown) {
+  if (blockType === 'MActionCardList' && propName === 'items' && isVariableValueConfig(value)) {
+    return true;
+  }
   if (!isDatasourceConfig(value)) return false;
   return propName === 'ds' || (blockType === 'MDatasourceEditor' && propName === 'value');
 }
