@@ -1,5 +1,5 @@
 import { markRaw, type Component } from 'vue';
-import MButton from './MButton.vue';
+import MButton, { normalizeButtonProps, type MButtonProps } from './MButton.vue';
 import MInput from './MInput.vue';
 import MLink from './MLink.vue';
 import MTag from './MTag.vue';
@@ -9,15 +9,20 @@ export type InlineRuntimeComponentDefinition = {
   normalizeProps: (props: Record<string, unknown>) => Record<string, unknown>;
 };
 
-function defineInlineRuntimeComponent(component: Component): InlineRuntimeComponentDefinition {
+function defineInlineRuntimeComponent(
+  component: Component,
+  normalizeProps: InlineRuntimeComponentDefinition['normalizeProps'] = (props) => ({ ...props, edit: props.edit === true })
+): InlineRuntimeComponentDefinition {
   return {
     component: markRaw(component),
-    normalizeProps: (props) => ({ ...props, edit: props.edit === true })
+    normalizeProps
   };
 }
 
 const inlineRuntimeComponents = {
-  MButton: defineInlineRuntimeComponent(MButton),
+  MButton: defineInlineRuntimeComponent(MButton, (props) => ({
+    ...normalizeButtonProps(props as Partial<MButtonProps>)
+  })),
   MInput: defineInlineRuntimeComponent(MInput),
   MLink: defineInlineRuntimeComponent(MLink),
   MTag: defineInlineRuntimeComponent(MTag)
