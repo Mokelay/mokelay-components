@@ -56,5 +56,57 @@ describe('LayoutRenderer runtime loading', () => {
 
     expect(wrapper.text()).toContain('Home');
     expect(wrapper.find('[data-testid="layout-block-error"]').exists()).toBe(false);
+
+    await wrapper.setProps({
+      page: {
+        uuid: 'docs',
+        name: 'Docs',
+        blocks: [],
+        subPage: false,
+        quotes: [],
+        dependencies: []
+      }
+    });
+    await flushPromises();
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(wrapper.find('[data-testid="layout-runtime-loading"]').exists()).toBe(false);
+  });
+
+  it('delegates internal layout links when a navigation handler is provided', async () => {
+    configureMokelayComponents({});
+    const onNavigate = vi.fn();
+    const wrapper = mount(LayoutRenderer, {
+      props: {
+        onNavigate,
+        layout: {
+          schemaVersion: 1,
+          uuid: 'editor-layout',
+          name: 'Editor layout',
+          resources: {
+            mainMenu: {
+              type: 'static',
+              items: [{ label: 'Docs', href: '#/docs' }]
+            }
+          },
+          blocks: [{
+            id: 'nav',
+            type: 'MEditorTopNav',
+            data: { items: { template: '{{resources.mainMenu.items}}' } }
+          }]
+        },
+        page: {
+          uuid: 'home',
+          name: 'Home',
+          blocks: [],
+          subPage: false,
+          quotes: [],
+          dependencies: []
+        }
+      }
+    });
+
+    await flushPromises();
+    await wrapper.get('a[href="#/docs"]').trigger('click');
+    expect(onNavigate).toHaveBeenCalledWith({ href: '#/docs', route: '/docs' });
   });
 });

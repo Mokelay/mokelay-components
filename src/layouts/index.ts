@@ -17,6 +17,7 @@ export * from './SourceLayoutShell.vue';
 export { default as TopNavAction } from './TopNavAction.vue';
 export * from './TopNavAction.vue';
 export * from './layoutBlockRegistry';
+export * from './navigation';
 export * from './domain';
 export * from './runtime';
 export * from './topNavRuntime';

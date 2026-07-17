@@ -15,11 +15,17 @@ import {
 import type { MokelayLayout, RenderBundlePage } from '@/layouts/domain';
 import type { PageRuntimeContext } from '@/pages/runtimeContext';
 import LayoutBlockRenderer from '@/layouts/LayoutBlockRenderer.vue';
+import {
+  resolveLayoutNavigation,
+  shouldHandleLayoutNavigation,
+  type LayoutNavigateHandler
+} from '@/layouts/navigation';
 
 const props = defineProps<{
   layout: MokelayLayout;
   page: RenderBundlePage;
   pageRuntimeContext?: PageRuntimeContext;
+  onNavigate?: LayoutNavigateHandler;
 }>();
 
 const slots = useSlots();
@@ -82,12 +88,25 @@ async function loadRuntimeContext() {
 }
 
 watch(
-  () => [props.layout.uuid, props.layout.updatedAt, props.page.uuid],
+  [() => props.layout.uuid, () => props.layout.updatedAt],
   () => {
     void loadRuntimeContext();
   },
   { immediate: true }
 );
+
+function handleClick(event: MouseEvent) {
+  if (!props.onNavigate || !shouldHandleLayoutNavigation(event)) return;
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const anchor = target.closest('a');
+  if (!(anchor instanceof HTMLAnchorElement)) return;
+  const request = resolveLayoutNavigation(anchor);
+  if (!request) return;
+
+  event.preventDefault();
+  props.onNavigate(request);
+}
 
 onBeforeUnmount(() => {
   loadRequestId += 1;
@@ -95,7 +114,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section data-testid="layout-renderer" class="layout-renderer">
+  <section data-testid="layout-renderer" class="layout-renderer" @click="handleClick">
     <span v-if="runtimePending" data-testid="layout-runtime-loading" class="layout-renderer__loading" aria-label="Loading layout"></span>
     <p v-if="runtimeError" data-testid="layout-runtime-error" class="layout-renderer__error">{{ runtimeError }}</p>
 

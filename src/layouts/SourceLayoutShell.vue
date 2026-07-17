@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import LayoutRenderer from '@/layouts/LayoutRenderer.vue';
 import type { MokelayLayout, RenderBundlePage } from '@/layouts/domain';
+import type { LayoutNavigateHandler } from '@/layouts/navigation';
 
 defineProps<{
   layout: MokelayLayout | null;
   page: RenderBundlePage;
   error?: string;
+  onNavigate?: LayoutNavigateHandler;
 }>();
 </script>
 
 <template>
-  <LayoutRenderer v-if="layout" :layout="layout" :page="page">
+  <LayoutRenderer v-if="layout" :layout="layout" :page="page" :on-navigate="onNavigate">
     <template #pageSlot>
       <slot></slot>
     </template>
