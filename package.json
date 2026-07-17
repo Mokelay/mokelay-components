@@ -1,6 +1,6 @@
 {
   "name": "mokelay-components",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "description": "Runtime rendering components, processors and actions for Mokelay DSL",
   "type": "module",
   "license": "MIT",
