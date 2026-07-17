@@ -185,7 +185,8 @@ async function uploadToEndpoint(file: File, endpoint: string, inputs: Record<str
 
   const response = await fetch(endpoint, {
     method: stringInput(inputs.method) || 'POST',
-    body: formData
+    body: formData,
+    ...(endpoint.startsWith('/') ? { credentials: 'include' as const } : {})
   });
 
   if (!response.ok) {

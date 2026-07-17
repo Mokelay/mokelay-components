@@ -526,7 +526,8 @@ export const $remote: RemoteFunction = async (value, options) => {
   const response = await fetch(await getResolvedDatasourceRequestUrl(datasource, options?.variableContext), {
     method: datasource.method,
     headers: getDatasourceRequestHeaders(datasource, options?.variableContext),
-    body: getDatasourceRequestBody(datasource, options)
+    body: getDatasourceRequestBody(datasource, options),
+    ...(datasource.domain === DEFAULT_API_DOMAIN_UUID ? { credentials: 'include' as const } : {})
   });
 
   if (!response.ok) {
