@@ -10,3 +10,4 @@ export type {
   PreviewRuntimeBlock
 } from './runtime/previewBlockRuntime';
 export * from './runtime/variableValue';
+export * from './runtime/localization';

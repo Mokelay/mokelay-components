@@ -3,13 +3,13 @@ import { computed } from 'vue';
 import MEditorTopNav from '@/layouts/MEditorTopNav.vue';
 import MSiteTopNav from '@/layouts/MSiteTopNav.vue';
 import MWebTopNav from '@/layouts/MWebTopNav.vue';
-import type { TopNavProps } from '@/layouts/topNavTypes';
+import type { ResolvedTopNavProps } from '@/layouts/topNavTypes';
 
 defineOptions({
   name: 'MTopNav'
 });
 
-const props = withDefaults(defineProps<TopNavProps>(), {
+const props = withDefaults(defineProps<ResolvedTopNavProps>(), {
   variant: 'site',
   brand: () => ({ text: 'Mokelay', href: '/' }),
   homeAction: undefined,

@@ -1,13 +1,14 @@
 <script lang="ts">
 
 import { valueBlockDataField } from '@/blocks/blockDataFields';
+import type { LocalizedValue } from '@/runtime/localization';
 
 // 输入框组件在编辑器中的属性定义。
 export interface MInputProps {
   edit: boolean;
   currentBlockId?: string;
   id?: string;
-  placeholder?: string;
+  placeholder?: string | LocalizedValue;
   value?: string;
   required?: boolean;
   maxLength?: number;
@@ -37,7 +38,9 @@ export function normalizeInputProps(props: Partial<MInputProps>): MInputProps {
     edit: props.edit ?? false,
     currentBlockId: normalizeString(props.currentBlockId),
     id: normalizeString(props.id),
-    placeholder: normalizeString(props.placeholder),
+    placeholder: typeof props.placeholder === 'string' || (typeof props.placeholder === 'object' && props.placeholder !== null && '$i18n' in props.placeholder)
+      ? props.placeholder
+      : '',
     value: normalizeString(props.value),
     required: normalizeBoolean(props.required),
     maxLength: normalizeMaxLength(props.maxLength),
@@ -50,6 +53,8 @@ export function normalizeInputProps(props: Partial<MInputProps>): MInputProps {
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { languageValue } from '@/runtime/globalSettingsRuntime';
+import { resolveLocalizedValue } from '@/runtime/localization';
 
 const props = defineProps<MInputProps & {
   onChange?: (payload: MInputProps) => void;
@@ -58,6 +63,9 @@ const props = defineProps<MInputProps & {
 
 const inputRef = ref<HTMLInputElement | null>(null);
 const inputDomId = computed(() => props.id || props.currentBlockId || '');
+const fieldPlaceholder = computed(() => typeof props.placeholder === 'string'
+  ? props.placeholder
+  : resolveLocalizedValue(props.placeholder, languageValue.value === 'en' ? 'en-US' : 'zh-CN'));
 
 // 组件内任意字段变更后，向外抛出完整 payload，保持工具状态一致。
 function emitChange(payload: Partial<MInputProps>) {
@@ -100,7 +108,7 @@ defineExpose({
       :data-testid="inputDomId || 'editor-input-control'"
       class="ce-input-tool__control"
       type="text"
-      :placeholder="placeholder"
+      :placeholder="fieldPlaceholder"
       :value="value"
       :required="required"
       :maxlength="maxLength"

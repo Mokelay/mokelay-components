@@ -1,5 +1,6 @@
 import type { MokelayBlock } from '@/blocks/types';
 import { requireMokelayCapability } from '@/runtime/adapter';
+import { normalizePageLocaleConfig, type PageLocaleConfig } from '@/runtime/localization';
 import {
   normalizePageDataSources,
   type PageDataSourceConfig
@@ -12,6 +13,7 @@ export type MokelayPage = {
   name: string;
   blocks: MokelayBlock[];
   dataSources?: PageDataSourceConfig[];
+  localeConfig: PageLocaleConfig;
   appUuid?: string | null;
   layoutUuid?: string | null;
   subPage: boolean;
@@ -45,6 +47,7 @@ export function normalizeMokelayPage(page: unknown): MokelayPage {
     name: readString(page.name) ?? '',
     blocks: Array.isArray(page.blocks) ? page.blocks as MokelayBlock[] : [],
     dataSources: normalizePageDataSources(page.dataSources ?? page.data_sources),
+    localeConfig: normalizePageLocaleConfig(page.localeConfig ?? page.locale_config),
     appUuid: readString(page.appUuid) ?? readString(page.app_uuid) ?? null,
     layoutUuid: readString(page.layoutUuid) ?? readString(page.layout_uuid) ?? null,
     subPage: readBoolean(page.subPage ?? page.sub_page),

@@ -1,8 +1,8 @@
 import type { LayoutAuthState } from '@/layouts/runtime';
-import type { LayoutBlock, LayoutMenuItem } from '@/layouts/domain';
+import type { LayoutBlock, LayoutMenuItem, LocalizedLayoutText, ResolvedLayoutMenuItem } from '@/layouts/domain';
 
 export type TopNavBrand = {
-  text?: string;
+  text?: LocalizedLayoutText;
   href?: string;
   showMark?: boolean;
 };
@@ -10,14 +10,14 @@ export type TopNavBrand = {
 export type TopNavControl = {
   id?: string;
   type?: string;
-  label?: string;
+  label?: LocalizedLayoutText;
   value?: string;
   binding?: {
     source?: string;
     key?: string;
   };
   options?: Array<{
-    label: string;
+    label: LocalizedLayoutText;
     value: string;
   }>;
 };
@@ -32,4 +32,15 @@ export type TopNavProps = {
   guestActions?: LayoutBlock[];
   userActions?: LayoutBlock[];
   auth?: LayoutAuthState;
+};
+
+export type ResolvedTopNavControl = Omit<TopNavControl, 'label' | 'options'> & {
+  label?: string;
+  options?: Array<{ label: string; value: string }>;
+};
+
+export type ResolvedTopNavProps = Omit<TopNavProps, 'brand' | 'utilityControls' | 'items'> & {
+  brand?: Omit<TopNavBrand, 'text'> & { text?: string };
+  utilityControls?: ResolvedTopNavControl[];
+  items?: ResolvedLayoutMenuItem[];
 };

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import TopNavAction from '@/layouts/TopNavAction.vue';
-import type { TopNavProps } from '@/layouts/topNavTypes';
+import type { ResolvedTopNavProps } from '@/layouts/topNavTypes';
 import {
   getActionLabel,
   getMenuItemBadge,
@@ -13,7 +13,7 @@ defineOptions({
   name: 'MWebTopNav'
 });
 
-const props = withDefaults(defineProps<TopNavProps>(), {
+const props = withDefaults(defineProps<ResolvedTopNavProps>(), {
   variant: 'web',
   brand: () => ({ text: 'Mokelay', href: '#', showMark: false }),
   homeAction: undefined,

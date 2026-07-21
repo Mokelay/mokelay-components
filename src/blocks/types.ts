@@ -1,4 +1,5 @@
 import type { Component } from 'vue';
+import type { PageLocaleConfig } from '@/runtime/localization';
 
 export type MokelayBlockData = Record<string, unknown>;
 
@@ -14,6 +15,7 @@ export interface MokelayPageDocument {
   time?: number;
   version?: string;
   blocks: MokelayBlock[];
+  localeConfig?: PageLocaleConfig;
 }
 
 export interface MokelayBlockComponentProps {

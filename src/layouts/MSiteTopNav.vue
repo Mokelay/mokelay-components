@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import TopNavAction from '@/layouts/TopNavAction.vue';
-import type { LayoutMenuItem } from '@/layouts/domain';
-import type { TopNavProps } from '@/layouts/topNavTypes';
+import type { ResolvedLayoutMenuItem } from '@/layouts/domain';
+import type { ResolvedTopNavProps } from '@/layouts/topNavTypes';
 import {
   controlLabel,
   controlValue,
@@ -19,7 +19,7 @@ defineOptions({
   name: 'MSiteTopNav'
 });
 
-const props = withDefaults(defineProps<TopNavProps>(), {
+const props = withDefaults(defineProps<ResolvedTopNavProps>(), {
   variant: 'site',
   brand: () => ({ text: 'Mokelay', href: '/' }),
   homeAction: undefined,
@@ -36,7 +36,7 @@ const brandText = computed(() => props.brand?.text?.trim() || 'Mokelay');
 const brandHref = computed(() => normalizeHref(props.brand?.href || '/'));
 const showBrandMark = computed(() => props.brand?.showMark !== false);
 
-function getMenuItemClass(item: LayoutMenuItem) {
+function getMenuItemClass(item: ResolvedLayoutMenuItem) {
   const tone = getMenuItemTone(item);
 
   return [

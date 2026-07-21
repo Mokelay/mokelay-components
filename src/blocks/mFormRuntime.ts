@@ -11,9 +11,10 @@ import {
   serializeMActionToolbarProps,
   type MActionToolbarProps
 } from './MActionToolbar.vue';
+import { normalizeLocalizedTextValue, type LocalizedTextValue } from '@/runtime/localization';
 
 export interface MFormItemData {
-  labelName: string;
+  labelName: LocalizedTextValue;
   variableName: string;
   fieldDataType?: string;
   editor?: StoredBlock;
@@ -86,7 +87,7 @@ export function generateFormItemVariableName() {
 }
 
 export function cloneFormItemData(item: MFormItemDataInput): MFormItemData {
-  const labelName = typeof item.labelName === 'string' && item.labelName.trim() ? item.labelName : '字段';
+  const labelName = normalizeLocalizedTextValue(item.labelName, '字段');
   const variableName = typeof item.variableName === 'string' && item.variableName.trim()
     ? item.variableName.trim()
     : generateFormItemVariableName();

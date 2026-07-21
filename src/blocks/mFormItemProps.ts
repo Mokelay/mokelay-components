@@ -4,19 +4,20 @@ import {
   normalizeSelectorBlock,
   type StoredBlock
 } from '@/blocks/storedBlocks';
+import { normalizeLocalizedTextValue, type LocalizedTextValue } from '@/runtime/localization';
 
 export type MFormItemLayout = 'Vertical' | 'Horizontal';
 
 export interface MFormItemProps {
   edit: boolean;
-  labelName?: string;
+  labelName?: LocalizedTextValue;
   variableName?: string;
   editor?: StoredBlock;
   layout?: MFormItemLayout;
 }
 
 export type NormalizedMFormItemProps = Omit<MFormItemProps, 'labelName' | 'variableName' | 'layout'> & {
-  labelName: string;
+  labelName: LocalizedTextValue;
   variableName: string;
   layout: MFormItemLayout;
 };
@@ -38,7 +39,7 @@ export function normalizeLayout(value?: unknown): MFormItemLayout {
 }
 
 function normalizeLabelName(value?: unknown) {
-  return typeof value === 'string' && value.trim() ? value : getDefaultFormItemLabelName();
+  return normalizeLocalizedTextValue(value, getDefaultFormItemLabelName());
 }
 
 function normalizeVariableName(value?: unknown, fallback?: string) {

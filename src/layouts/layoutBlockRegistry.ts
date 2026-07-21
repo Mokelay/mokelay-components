@@ -8,6 +8,7 @@ import {
   normalizeTopNavProps,
   resolveTopNavBlockData
 } from '@/layouts/topNavRuntime';
+import { resolveLayoutLocalizedTree } from '@/layouts/localization';
 
 export type LayoutBlockKind = 'component' | 'pageSlot' | 'conditional';
 
@@ -99,7 +100,7 @@ function readDefaultTopNavVariant(type: string) {
 }
 
 export function defaultResolveLayoutBlockData(data: unknown, context: LayoutRuntimeContext) {
-  const value = resolveLayoutTemplates(data ?? {}, context);
+  const value = resolveLayoutLocalizedTree(resolveLayoutTemplates(data ?? {}, context), context.layout);
   return isRecord(value) ? value : {};
 }
 

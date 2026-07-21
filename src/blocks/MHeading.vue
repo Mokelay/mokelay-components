@@ -1,9 +1,10 @@
 <script lang="ts">
-import { normalizeAlign, normalizeSelectValue, stringValue, type PageDslAlign } from '@/blocks/pageDslRuntime';
+import { normalizeAlign, normalizeSelectValue, type PageDslAlign } from '@/blocks/pageDslRuntime';
+import { normalizeLocalizedTextValue, type LocalizedTextValue } from '@/runtime/localization';
 
 export interface MHeadingProps {
   edit: boolean;
-  text?: string;
+  text?: LocalizedTextValue;
   level?: string;
   align?: PageDslAlign | string;
 }
@@ -22,7 +23,7 @@ export function normalizeHeadingProps(props: Partial<MHeadingProps>): MHeadingPr
 
   return {
     edit: props.edit ?? false,
-    text: stringValue(merged.text),
+    text: normalizeLocalizedTextValue(merged.text, headingDefaults.text),
     level: normalizeSelectValue(merged.level, ['1', '2', '3'] as const, '1'),
     align: normalizeAlign(merged.align)
   };
@@ -30,11 +31,23 @@ export function normalizeHeadingProps(props: Partial<MHeadingProps>): MHeadingPr
 </script>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 import PageDslBlock from '@/blocks/PageDslBlock.vue';
 import type { PageDslCallbacks } from '@/blocks/pageDslRuntime';
+import { useI18n } from '@/i18n';
+import { PageLocaleConfigKey } from '@/pages/runtimeContext';
+import { normalizePageLocaleConfig, resolveLocalizedValue } from '@/runtime/localization';
 
 const props = defineProps<MHeadingProps & PageDslCallbacks<MHeadingProps>>();
+const { localeValue } = useI18n();
+const pageLocaleConfig = inject(PageLocaleConfigKey, computed(() => normalizePageLocaleConfig(undefined, localeValue.value)));
+const headingText = computed(() => typeof props.text === 'string'
+  ? props.text
+  : resolveLocalizedValue(
+      props.text,
+      localeValue.value === 'en' ? 'en-US' : 'zh-CN',
+      pageLocaleConfig.value
+    ));
 
 const headingTag = computed(() => {
   if (props.level === '2') return 'h2';
@@ -51,7 +64,7 @@ const headingClass = computed(() => {
 <template>
   <PageDslBlock block-type="MHeading">
     <component :is="headingTag" :class="headingClass">
-      {{ text || '页面标题' }}
+      {{ headingText || '页面标题' }}
     </component>
   </PageDslBlock>
 </template>

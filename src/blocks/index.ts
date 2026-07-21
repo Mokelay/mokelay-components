@@ -110,3 +110,4 @@ export type {
 } from './mFormRuntime';
 export * from './pageDslRuntime';
 export * from './storedBlocks';
+export * from '../runtime/localization';

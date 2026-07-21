@@ -12,11 +12,13 @@ import {
   PageRuntimeContextKey,
   PageRuntimeDataKey,
   PageRuntimeVariableContextKey,
+  PageLocaleConfigKey,
   resolvePageDataSources,
   type PageDataSourceConfig,
   type PageRuntimeContext,
   type PageRuntimeData
 } from '@/pages/runtimeContext';
+import { normalizePageLocaleConfig, type PageLocaleConfig } from '@/runtime/localization';
 import {
   getRegisteredPageVariableRuntimes,
   registerPageVariableRuntime,
@@ -33,6 +35,7 @@ export interface MPageProps {
   value?: MokelayBlock[];
   pageId?: string;
   dataSources?: PageDataSourceConfig[];
+  localeConfig?: PageLocaleConfig;
   runtimeContext?: PageRuntimeContext;
   context?: PageRuntimeContext;
   onToolChange?: (payload: { edit: boolean; value: MokelayBlock[] }) => void;
@@ -54,6 +57,7 @@ type RuntimeColumnData = { blocks?: MokelayBlock[] };
 const previewBlocks = computed(() => Array.isArray(props.value) ? props.value : []);
 const pageRuntimeContext = computed<PageRuntimeContext>(() => props.runtimeContext ?? props.context ?? {});
 const normalizedDataSources = computed(() => normalizePageDataSources(props.dataSources));
+const normalizedLocaleConfig = computed(() => normalizePageLocaleConfig(props.localeConfig));
 const pageRuntimeData = ref<PageRuntimeData>({});
 const pageDataLoading = ref(false);
 const pageDataError = ref('');
@@ -92,6 +96,7 @@ provide(PreviewBlockRuntimeKey, previewRuntime);
 provide(PageRuntimeContextKey, pageRuntimeContext);
 provide(PageRuntimeDataKey, computed(() => pageRuntimeData.value));
 provide(PageRuntimeVariableContextKey, pageVariableRuntimeContext);
+provide(PageLocaleConfigKey, normalizedLocaleConfig);
 provide(PageReferenceAncestryKey, pageReferenceAncestry);
 
 function getColumns(block: MokelayBlock): RuntimeColumnData[] {
@@ -123,7 +128,7 @@ function getCloseResult(value: unknown) {
 }
 
 function getData(): MokelayPageDocument {
-  return { blocks: previewBlocks.value };
+  return { blocks: previewBlocks.value, localeConfig: normalizedLocaleConfig.value };
 }
 
 function close(invocation?: unknown) {

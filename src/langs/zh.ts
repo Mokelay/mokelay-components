@@ -833,6 +833,24 @@ export const zhMessages = {
       small: '小'
     }
   },
+  layout: {
+    internalAdmin: {
+      fullscreen: '全屏',
+      typeScale: '文字',
+      translate: '翻译',
+      testEnvironment: '测试环境',
+      searchMenu: '搜索菜单...',
+      favoriteMenu: '收藏菜单',
+      home: '首页',
+      permissionGuide: '权限申请教程',
+      administrator: '管理员',
+      tool: '工具',
+      collapse: '收起',
+      expand: '展开',
+      toggleMenu: '切换菜单',
+      quickMenu: '快捷菜单'
+    }
+  },
   page: {
     toolboxTitle: '页面',
     backToPages: '返回页面管理',

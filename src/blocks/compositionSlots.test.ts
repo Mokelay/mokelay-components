@@ -47,6 +47,16 @@ describe('runtime block composition slots', () => {
     expect(wrapper.classes()).toContain('ce-form-item-tool--horizontal');
   });
 
+  it('preserves and renders a localized form item label', () => {
+    const labelName = { $i18n: { 'zh-CN': '邮箱', 'en-US': 'Email' } };
+    const wrapper = mount(MFormItem, {
+      props: { edit: true, labelName, variableName: 'email' },
+      slots: { control: () => h('div', 'control') }
+    });
+    expect(wrapper.get('[data-testid="form-item-label-preview"]').text()).toBe('邮箱');
+    expect(wrapper.vm.$props.labelName).toEqual(labelName);
+  });
+
   it('lays compact horizontal form items out as flexible columns', () => {
     const wrapper = mount(MForm, {
       props: {

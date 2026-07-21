@@ -6,8 +6,9 @@ import {
   getGlobalSettingValue,
   setGlobalSettingValue
 } from '@/runtime/globalSettingsRuntime';
-import type { LayoutBlock, LayoutMenuItem } from '@/layouts/domain';
-import type { TopNavBrand, TopNavControl, TopNavProps } from '@/layouts/topNavTypes';
+import type { LayoutBlock, LayoutMenuItem, ResolvedLayoutMenuItem } from '@/layouts/domain';
+import type { ResolvedTopNavControl, ResolvedTopNavProps, TopNavBrand, TopNavControl, TopNavProps } from '@/layouts/topNavTypes';
+import { resolveLayoutLocalizedTree } from '@/layouts/localization';
 
 const actionVariants = new Set(['primary', 'secondary', 'ghost', 'teal', 'success', 'web-primary']);
 const actionShapes = new Set(['default', 'icon', 'avatar']);
@@ -72,11 +73,11 @@ export function getActionAriaLabel(block: LayoutBlock) {
   return getActionLabel(block) || getActionIcon(block) || block.id || block.type;
 }
 
-export function getMenuItemBadge(item: LayoutMenuItem) {
+export function getMenuItemBadge(item: ResolvedLayoutMenuItem) {
   return readString(item.badge);
 }
 
-export function getMenuItemTone(item: LayoutMenuItem) {
+export function getMenuItemTone(item: ResolvedLayoutMenuItem) {
   return readString(item.tone);
 }
 
@@ -86,18 +87,18 @@ export function getVisibleTopNavActions(props: Pick<TopNavProps, 'actions' | 'gu
   return [...directActions, ...authActions];
 }
 
-export function controlValue(control: TopNavControl) {
+export function controlValue(control: ResolvedTopNavControl) {
   const globalSettingValue = readGlobalSettingControlValue(control);
   if (globalSettingValue) return globalSettingValue;
 
   return control.value || control.options?.[0]?.value || '';
 }
 
-export function controlLabel(control: TopNavControl) {
+export function controlLabel(control: ResolvedTopNavControl) {
   return control.label || control.id || 'Navigation option';
 }
 
-export function handleControlChange(control: TopNavControl, value: string) {
+export function handleControlChange(control: ResolvedTopNavControl, value: string) {
   const key = readGlobalSettingControlKey(control);
   if (key) {
     setGlobalSettingValue(key, value);
@@ -115,13 +116,13 @@ export function resolveTopNavBlockData(data: unknown, context: LayoutRuntimeCont
       continue;
     }
 
-    result[key] = resolveLayoutTemplates(value, context);
+    result[key] = resolveLayoutLocalizedTree(resolveLayoutTemplates(value, context), context.layout);
   }
 
   return result;
 }
 
-export function normalizeTopNavProps(data: unknown, context: LayoutRuntimeContext): TopNavProps {
+export function normalizeTopNavProps(data: unknown, context: LayoutRuntimeContext): ResolvedTopNavProps {
   const source = isRecord(data) ? data : {};
 
   return {
@@ -129,7 +130,7 @@ export function normalizeTopNavProps(data: unknown, context: LayoutRuntimeContex
     brand: normalizeTopNavBrand(source.brand),
     homeAction: normalizeLayoutBlock(source.homeAction),
     utilityControls: normalizeTopNavControls(source.utilityControls),
-    items: Array.isArray(source.items) ? source.items as LayoutMenuItem[] : [],
+    items: Array.isArray(source.items) ? source.items as ResolvedLayoutMenuItem[] : [],
     actions: normalizeLayoutBlocks(source.actions),
     guestActions: normalizeLayoutBlocks(source.guestActions),
     userActions: normalizeLayoutBlocks(source.userActions),
@@ -166,7 +167,7 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function normalizeTopNavBrand(value: unknown): TopNavBrand | undefined {
+function normalizeTopNavBrand(value: unknown): ResolvedTopNavProps['brand'] {
   if (!isRecord(value)) return undefined;
 
   return {
@@ -176,7 +177,7 @@ function normalizeTopNavBrand(value: unknown): TopNavBrand | undefined {
   };
 }
 
-function normalizeTopNavControls(value: unknown): TopNavControl[] {
+function normalizeTopNavControls(value: unknown): ResolvedTopNavControl[] {
   if (!Array.isArray(value)) return [];
 
   return value
@@ -194,16 +195,16 @@ function normalizeTopNavControls(value: unknown): TopNavControl[] {
               label: readString(option.label),
               value: readString(option.value)
             }))
-            .filter((option) => option.label && option.value)
+            .filter((option) => (typeof option.label !== 'string' || option.label) && option.value)
         : []
     }));
 }
 
-function readGlobalSettingControlValue(control: TopNavControl) {
+function readGlobalSettingControlValue(control: ResolvedTopNavControl) {
   return getGlobalSettingValue(readGlobalSettingControlKey(control));
 }
 
-function readGlobalSettingControlKey(control: TopNavControl) {
+function readGlobalSettingControlKey(control: ResolvedTopNavControl) {
   if (control.binding?.source !== 'globalSetting') return '';
 
   const key = control.binding.key;

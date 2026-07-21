@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import TopNavAction from '@/layouts/TopNavAction.vue';
-import type { LayoutMenuItem } from '@/layouts/domain';
-import type { TopNavControl, TopNavProps } from '@/layouts/topNavTypes';
+import type { ResolvedLayoutMenuItem } from '@/layouts/domain';
+import type { ResolvedTopNavControl, ResolvedTopNavProps } from '@/layouts/topNavTypes';
 import {
   controlLabel,
   controlValue,
@@ -18,7 +18,7 @@ defineOptions({
   name: 'MEditorTopNav'
 });
 
-const props = withDefaults(defineProps<TopNavProps>(), {
+const props = withDefaults(defineProps<ResolvedTopNavProps>(), {
   variant: 'editor',
   brand: () => ({ text: 'Mokelay Editor', href: '#/', showMark: false }),
   homeAction: undefined,
@@ -59,13 +59,13 @@ function normalizeHashPath(value: string) {
   return normalized || '#/';
 }
 
-function normalizeItemHash(item: LayoutMenuItem) {
+function normalizeItemHash(item: ResolvedLayoutMenuItem) {
   const href = normalizeHref(item.href);
   if (!href.startsWith('#/')) return '';
   return normalizeHashPath(href);
 }
 
-function isActiveItem(item: LayoutMenuItem) {
+function isActiveItem(item: ResolvedLayoutMenuItem) {
   const itemHash = normalizeItemHash(item);
   if (!itemHash) return item.active === true;
   const activeHash = currentHash.value;
@@ -73,7 +73,7 @@ function isActiveItem(item: LayoutMenuItem) {
   return activeHash === itemHash || activeHash.startsWith(`${itemHash}/`);
 }
 
-function menuItemOptionLabel(item: LayoutMenuItem) {
+function menuItemOptionLabel(item: ResolvedLayoutMenuItem) {
   const badge = getMenuItemBadge(item);
   return badge ? `${item.label} ${badge}` : item.label;
 }
@@ -87,20 +87,20 @@ function closeMobileMenu() {
   isMobileMenuOpen.value = false;
 }
 
-function mobileControlKey(control: TopNavControl) {
+function mobileControlKey(control: ResolvedTopNavControl) {
   return control.id || control.label || control.value || control.options?.[0]?.value || 'control';
 }
 
-function mobileControlLabel(control: TopNavControl) {
+function mobileControlLabel(control: ResolvedTopNavControl) {
   const selectedValue = controlValue(control);
   return control.options?.find((option) => option.value === selectedValue)?.label || controlLabel(control);
 }
 
-function mobileControlAriaLabel(control: TopNavControl) {
+function mobileControlAriaLabel(control: ResolvedTopNavControl) {
   return `${controlLabel(control)}: ${mobileControlLabel(control)}`;
 }
 
-function mobileControlIconPath(control: TopNavControl) {
+function mobileControlIconPath(control: ResolvedTopNavControl) {
   const id = control.id || control.binding?.key || '';
   const value = controlValue(control);
 
@@ -117,17 +117,17 @@ function mobileControlIconPath(control: TopNavControl) {
   return 'M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8.92 4.6 1.65 1.65 0 0 0 9.92 3.1V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.61.8 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z';
 }
 
-function toggleMobileControl(control: TopNavControl) {
+function toggleMobileControl(control: ResolvedTopNavControl) {
   const key = mobileControlKey(control);
   openMobileControlId.value = openMobileControlId.value === key ? '' : key;
   closeMobileMenu();
 }
 
-function isMobileControlOpen(control: TopNavControl) {
+function isMobileControlOpen(control: ResolvedTopNavControl) {
   return openMobileControlId.value === mobileControlKey(control);
 }
 
-function handleMobileControlChange(control: TopNavControl, value: string) {
+function handleMobileControlChange(control: ResolvedTopNavControl, value: string) {
   handleControlChange(control, value);
   closeMobileControl();
 }

@@ -14,6 +14,9 @@ import {
 import {
   PageRuntimeVariableContextKey
 } from '@/pages/runtimeContext';
+import { PageLocaleConfigKey } from '@/pages/runtimeContext';
+import { languageValue } from '@/runtime/globalSettingsRuntime';
+import { isLocalizedValue, normalizePageLocaleConfig, resolveLocalizedTree } from '@/runtime/localization';
 import { PageReferenceAncestryKey } from '@/pages/referenceRuntime';
 import {
   isVariableValueConfig,
@@ -37,6 +40,7 @@ const tableClass = computed(() =>
 
 const previewRuntime = inject(PreviewBlockRuntimeKey, null);
 const pageVariableContext = inject(PageRuntimeVariableContextKey, computed<VariableValueResolveContext>(() => ({})));
+const pageLocaleConfig = inject(PageLocaleConfigKey, computed(() => normalizePageLocaleConfig(undefined, languageValue.value)));
 const pageReferenceAncestry = inject(PageReferenceAncestryKey, computed<readonly string[]>(() => []));
 const componentInstance = shallowRef<unknown | null>(null);
 const loadedDefinition = shallowRef<MokelayBlockRenderDefinition | undefined>();
@@ -140,6 +144,12 @@ function resolveBlockData(data: unknown, blockType: string) {
 }
 
 function resolveBlockRuntimeValue(value: unknown): unknown {
+  if (isLocalizedValue(value)) {
+    return resolveLocalizedTree(value, {
+      locale: languageValue.value === 'en' ? 'en-US' : 'zh-CN',
+      localeConfig: pageLocaleConfig.value
+    });
+  }
   if (isVariableValueConfig(value)) {
     return resolveRuntimeValue(value, getVariableResolveContext());
   }
@@ -276,7 +286,7 @@ function setComponentRef(instance: unknown) {
 
 const blockEventListeners = computed(() => {
   const listeners: Record<string, (event: unknown) => void> = {};
-  const events = normalizeBlockEvents(props.block.events);
+  const events = normalizeBlockEvents(resolveBlockRuntimeValue(props.block.events));
 
   events.forEach((eventConfig) => {
     if (!eventConfig.event) return;

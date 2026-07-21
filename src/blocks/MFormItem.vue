@@ -21,12 +21,15 @@ export type {
 </script>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue';
+import { computed, inject, reactive, watch } from 'vue';
 import MokelayBlockRenderer from '@/blocks/MokelayBlockRenderer.vue';
 import { useI18n } from '@/i18n';
 import {
   normalizeSelectorBlock,
 } from '@/blocks/storedBlocks';
+import { PageLocaleConfigKey } from '@/pages/runtimeContext';
+import { languageValue } from '@/runtime/globalSettingsRuntime';
+import { normalizePageLocaleConfig, resolveLocalizedValue } from '@/runtime/localization';
 
 const props = withDefaults(defineProps<MFormItemProps & {
   onChange?: (payload: MFormItemProps) => void;
@@ -42,6 +45,10 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const formItem = reactive(normalizeFormItemProps(props));
+const pageLocaleConfig = inject(PageLocaleConfigKey, computed(() => normalizePageLocaleConfig(undefined)));
+const displayLabelName = computed(() => typeof formItem.labelName === 'string'
+  ? formItem.labelName
+  : resolveLocalizedValue(formItem.labelName, languageValue.value === 'en' ? 'en-US' : 'zh-CN', pageLocaleConfig.value));
 
 function emitChange() {
   const payload: MFormItemProps = {
@@ -112,7 +119,7 @@ watch(
         class="ce-form-item-tool__label"
         :data-testid="edit ? 'form-item-label-preview' : 'preview-form-item-label'"
       >
-        {{ formItem.labelName }}
+        {{ displayLabelName }}
       </div>
       <div
         class="ce-form-item-tool__editor"

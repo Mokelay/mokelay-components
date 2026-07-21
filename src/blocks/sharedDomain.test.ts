@@ -7,6 +7,8 @@ import {
 import {
   cloneSelectorBlock,
   createParagraphBlock,
+  getParagraphTextValue,
+  mergeParagraphBlocks,
   normalizeSelectorBlock,
   normalizeStoredBlocks
 } from './storedBlocks';
@@ -57,5 +59,32 @@ describe('shared block domain helpers', () => {
       fixed: 'left'
     });
     expect(inferAdvanceTableColumnVariable(columns[0]?.columnContent)).toBe('user.name');
+  });
+
+  it('preserves and merges localized paragraph values', () => {
+    const localized = createParagraphBlock({
+      $i18n: {
+        'zh-CN': '<b>你好</b>',
+        'en-US': '<a href="/hello">Hello</a>'
+      }
+    }, 'localized');
+
+    expect(normalizeStoredBlocks([localized])).toEqual([localized]);
+    expect(getParagraphTextValue(localized)).toEqual(localized.data.text);
+    expect(mergeParagraphBlocks([
+      localized,
+      createParagraphBlock('!', 'suffix')
+    ])).toEqual([{
+      id: 'localized',
+      type: 'paragraph',
+      data: {
+        text: {
+          $i18n: {
+            'zh-CN': '<b>你好</b>!',
+            'en-US': '<a href="/hello">Hello</a>!'
+          }
+        }
+      }
+    }]);
   });
 });

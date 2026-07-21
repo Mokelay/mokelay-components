@@ -2,7 +2,7 @@
 import { i18n } from '@/i18n';
 
 import {
-  getParagraphText,
+  getParagraphTextValue,
   normalizeStoredBlocks,
   type StoredBlock
 } from '@/blocks/storedBlocks';
@@ -85,6 +85,11 @@ import { computed, inject, nextTick, onBeforeUnmount, ref, shallowRef, watch } f
 import { getInlineRuntimeComponentDefinition } from '@/blocks/inlineRuntimeComponents';
 import { useI18n } from '@/i18n';
 import {
+  normalizePageLocaleConfig,
+  resolveLocalizedTree,
+  resolveLocalizedValue
+} from '@/runtime/localization';
+import {
   resolveDatasourceRuntimeData,
   type DatasourceRuntimeMatchingExternalFieldData
 } from '@/datasource/runtime';
@@ -94,6 +99,7 @@ import {
   type PreviewRuntimeBlock
 } from '@/runtime/previewBlockRuntime';
 import {
+  PageLocaleConfigKey,
   PageRuntimeVariableContextKey
 } from '@/pages/runtimeContext';
 import { PageReferenceAncestryKey } from '@/pages/referenceRuntime';
@@ -120,8 +126,9 @@ type PaginationState = {
   total: number;
 };
 
-const { t } = useI18n();
+const { t, localeValue } = useI18n();
 const previewRuntime = inject(PreviewBlockRuntimeKey, null);
+const pageLocaleConfig = inject(PageLocaleConfigKey, computed(() => normalizePageLocaleConfig(undefined, localeValue.value)));
 const pageReferenceAncestry = inject(PageReferenceAncestryKey, computed<readonly string[]>(() => []));
 const pageVariableContext = inject(PageRuntimeVariableContextKey, computed<VariableValueResolveContext>(() => ({})));
 const rootRef = ref<HTMLElement | null>(null);
@@ -583,7 +590,7 @@ function getCellBlocks(row: Record<string, unknown>, column: MAdvanceTableColumn
         ...block,
         id: interpolateValue(block.id, row, { preserveMissing: true }),
         data: {
-          text: interpolateValue(getParagraphText(block), row)
+          text: interpolateComponentData(getParagraphTextValue(block), row)
         },
         events: interpolateComponentData(block.events, row, { preserveMissing: true }) as StoredBlock['events']
       };
@@ -630,7 +637,11 @@ function getBoundCellBlockData(block: StoredBlock) {
       ...runtimeBlockData.value
     }
   });
-  return isRecord(resolved) ? resolved : {};
+  const localized = resolveLocalizedTree(resolved, {
+    locale: localeValue.value === 'en' ? 'en-US' : 'zh-CN',
+    localeConfig: pageLocaleConfig.value
+  });
+  return isRecord(localized) ? localized : {};
 }
 
 function setCellBlockRuntimeRef(block: StoredBlock, instance: unknown) {
@@ -663,7 +674,11 @@ function getCellBlockEventListeners(block: StoredBlock) {
   if (props.edit) return {};
 
   const listeners: Record<string, (event: unknown) => void> = {};
-  normalizeBlockEvents(block.events).forEach((eventConfig) => {
+  const resolvedEvents = resolveLocalizedTree(block.events, {
+    locale: localeValue.value === 'en' ? 'en-US' : 'zh-CN',
+    localeConfig: pageLocaleConfig.value
+  });
+  normalizeBlockEvents(resolvedEvents).forEach((eventConfig) => {
     if (!eventConfig.event) return;
     const previousListener = listeners[eventConfig.event];
     listeners[eventConfig.event] = (event: unknown) => {
@@ -681,7 +696,11 @@ function getCellBlockEventListeners(block: StoredBlock) {
 }
 
 function getBlockText(block: StoredBlock) {
-  return getParagraphText(block);
+  return resolveLocalizedValue(
+    getParagraphTextValue(block),
+    localeValue.value === 'en' ? 'en-US' : 'zh-CN',
+    pageLocaleConfig.value
+  );
 }
 
 function getColumnWidth(column: MAdvanceTableColumnConfig) {

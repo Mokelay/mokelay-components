@@ -1,7 +1,27 @@
 import type { MokelayBlock } from '@/blocks/types';
 import { normalizePageDataSources, type PageDataSourceConfig } from '@/pages/runtimeContext';
+import {
+  normalizeLocalizedTextValue,
+  normalizePageLocaleConfig,
+  type LocalizedTextValue,
+  type PageLocaleConfig
+} from '@/runtime/localization';
+
+export type LocalizedLayoutText = LocalizedTextValue;
 
 export type LayoutMenuItem = {
+  label: LocalizedLayoutText;
+  href: string;
+  active?: boolean;
+  badge?: LocalizedLayoutText;
+  caret?: boolean;
+  highlight?: boolean;
+  tone?: string;
+  children?: LayoutMenuItem[];
+  [key: string]: unknown;
+};
+
+export type ResolvedLayoutMenuItem = {
   label: string;
   href: string;
   active?: boolean;
@@ -9,8 +29,7 @@ export type LayoutMenuItem = {
   caret?: boolean;
   highlight?: boolean;
   tone?: string;
-  children?: LayoutMenuItem[];
-  [key: string]: unknown;
+  children?: ResolvedLayoutMenuItem[];
 };
 
 export type StaticMenuResource = {
@@ -38,6 +57,7 @@ export type MokelayLayout = {
   schemaVersion: 1;
   uuid: string;
   name: string;
+  localeConfig?: PageLocaleConfig;
   resources?: {
     mainMenu?: LayoutResource;
     [key: string]: LayoutResource | undefined;
@@ -56,6 +76,7 @@ export type RenderBundlePage = {
   name: string;
   blocks: MokelayBlock[];
   dataSources?: PageDataSourceConfig[];
+  localeConfig?: PageLocaleConfig;
   appUuid?: string | null;
   layoutUuid?: string | null;
   subPage: boolean;
@@ -80,6 +101,7 @@ export function normalizeLayoutJson(value: unknown, fallbackUuid = '', fallbackN
     ...cloneRecord(source),
     uuid,
     name,
+    localeConfig: normalizePageLocaleConfig(source.localeConfig ?? source.locale_config),
     resources: normalizeResources(source.resources),
     auth: normalizeAuth(source.auth),
     blocks: normalizeLayoutBlocks(source.blocks)
@@ -110,12 +132,12 @@ export function normalizeMenuItems(value: unknown): LayoutMenuItem[] {
     .map((item) => {
       const normalized: LayoutMenuItem = {
         ...cloneRecord(item),
-        label: readString(item.label) || readString(item.name) || '',
+        label: normalizeLocalizedTextValue(item.label ?? item.name),
         href: readString(item.href) || readString(item.url) || '#',
         active: item.active === true,
         children: normalizeMenuItems(item.children)
       };
-      const badge = readString(item.badge);
+      const badge = normalizeLocalizedTextValue(item.badge);
       const tone = readString(item.tone);
 
       if (badge) normalized.badge = badge;
@@ -125,7 +147,7 @@ export function normalizeMenuItems(value: unknown): LayoutMenuItem[] {
 
       return normalized;
     })
-    .filter((item) => item.label);
+    .filter((item) => typeof item.label !== 'string' || Boolean(item.label));
 }
 
 export function normalizeRenderBundlePage(value: unknown): RenderBundlePage | null {
@@ -144,6 +166,7 @@ export function normalizeRenderBundlePage(value: unknown): RenderBundlePage | nu
     name: readString(value.name) || '',
     blocks: Array.isArray(value.blocks) ? value.blocks as MokelayBlock[] : [],
     dataSources: normalizePageDataSources(value.dataSources ?? value.data_sources),
+    localeConfig: normalizePageLocaleConfig(value.localeConfig ?? value.locale_config),
     appUuid: readString(value.appUuid) ?? readString(value.app_uuid) ?? null,
     layoutUuid: readString(value.layoutUuid) ?? readString(value.layout_uuid) ?? null,
     subPage: readBoolean(value.subPage ?? value.sub_page),

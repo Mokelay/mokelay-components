@@ -2,9 +2,21 @@
 
 import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
-import MTabs from './MTabs.vue';
+import MTabs, { normalizeTabs } from './MTabs.vue';
 
 describe('MTabs', () => {
+  it('preserves localized names and renders the active runtime language', () => {
+    const tabs = normalizeTabs([{
+      id: 'localized',
+      name: { $i18n: { 'zh-CN': '账户', 'en-US': 'Account' } },
+      pageUUID: 'account-page'
+    }]);
+    expect(tabs[0]?.name).toEqual({ $i18n: { 'zh-CN': '账户', 'en-US': 'Account' } });
+
+    const wrapper = mount(MTabs, { props: { edit: false, tabs } });
+    expect(wrapper.get('[data-testid="editor-tabs-tab-localized"]').text()).toBe('账户');
+  });
+
   it('keeps the tab header visible when only one tab is configured', () => {
     const wrapper = mount(MTabs, {
       props: {

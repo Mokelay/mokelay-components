@@ -5,6 +5,7 @@ import {
   normalizePageRenderBundle,
   normalizeSystemLayout
 } from './domain';
+import { collectMissingLayoutTranslations } from './localization';
 
 describe('layout domain', () => {
   it('normalizes layout DSL without management API state', () => {
@@ -15,11 +16,26 @@ describe('layout domain', () => {
     })).toMatchObject({
       schemaVersion: 1,
       uuid: 'main',
+      localeConfig: { defaultLocale: 'zh-CN', supportedLocales: ['zh-CN', 'en-US'] },
       blocks: [{ type: 'MSiteTopNav', data: { compact: true } }]
     });
     expect(normalizeMenuItems([{ name: 'Home', url: '/' }, { name: '' }])).toEqual([
       expect.objectContaining({ label: 'Home', href: '/' })
     ]);
+  });
+
+  it('preserves localized menu labels and reports missing layout translations', () => {
+    const label = { $i18n: { 'zh-CN': '首页', 'en-US': '' } };
+    expect(normalizeMenuItems([{ label, href: '/' }])[0]?.label).toEqual(label);
+
+    expect(collectMissingLayoutTranslations({
+      localeConfig: { defaultLocale: 'zh-CN', supportedLocales: ['zh-CN', 'en-US'] },
+      resources: { mainMenu: { type: 'static', items: [{ label, href: '/' }] } },
+      blocks: [{ id: 'nav', type: 'MTopNav', data: { brand: { text: label } } }]
+    })).toEqual(expect.arrayContaining([
+      expect.objectContaining({ blockType: 'layout-resources', locale: 'en-US' }),
+      expect.objectContaining({ blockId: 'nav', path: 'data.brand.text', locale: 'en-US' })
+    ]));
   });
 
   it('normalizes stored system layouts and page render bundles', () => {

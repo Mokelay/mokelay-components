@@ -1,4 +1,9 @@
 import { cloneBlockEvents, type BlockEvent } from '@/blocks/blockEvents';
+import {
+  isLocalizedValue,
+  type LocalizedTextValue,
+  type LocalizedValue
+} from '@/runtime/localization';
 
 export type StoredBlock = {
   id: string;
@@ -15,7 +20,7 @@ export function generateBlockId() {
   return Math.random().toString(36).slice(2, 12);
 }
 
-export function createParagraphBlock(text: string, id = generateBlockId()): StoredBlock {
+export function createParagraphBlock(text: LocalizedTextValue, id = generateBlockId()): StoredBlock {
   return {
     id,
     type: 'paragraph',
@@ -27,6 +32,29 @@ export function createParagraphBlock(text: string, id = generateBlockId()): Stor
 
 export function getParagraphText(block: StoredBlock) {
   return typeof block.data.text === 'string' ? block.data.text : '';
+}
+
+export function getParagraphTextValue(block: StoredBlock): LocalizedTextValue {
+  if (typeof block.data.text === 'string') return block.data.text;
+  return isLocalizedValue(block.data.text) ? cloneJsonValue(block.data.text) : '';
+}
+
+export function mergeParagraphTextValues(
+  left: LocalizedTextValue,
+  right: LocalizedTextValue
+): LocalizedTextValue {
+  if (typeof left === 'string' && typeof right === 'string') return left + right;
+  const locales = new Set<string>([
+    ...(isLocalizedValue(left) ? Object.keys(left.$i18n) : []),
+    ...(isLocalizedValue(right) ? Object.keys(right.$i18n) : [])
+  ]);
+  const merged: LocalizedValue = { $i18n: {} };
+  locales.forEach((locale) => {
+    const leftText = typeof left === 'string' ? left : left.$i18n[locale] ?? '';
+    const rightText = typeof right === 'string' ? right : right.$i18n[locale] ?? '';
+    merged.$i18n[locale] = leftText + rightText;
+  });
+  return merged;
 }
 
 export function getEmptyStoredBlockValue() {
@@ -80,9 +108,12 @@ export function mergeParagraphBlocks(blocks: StoredBlock[]) {
     if (block.type === 'paragraph') {
       const previous = merged[merged.length - 1];
       if (previous?.type === 'paragraph') {
-        previous.data.text = getParagraphText(previous) + getParagraphText(block);
+        previous.data.text = mergeParagraphTextValues(
+          getParagraphTextValue(previous),
+          getParagraphTextValue(block)
+        );
       } else {
-        merged.push(createParagraphBlock(getParagraphText(block), block.id));
+        merged.push(createParagraphBlock(getParagraphTextValue(block), block.id));
       }
       continue;
     }
@@ -127,7 +158,7 @@ export function normalizeStoredBlocks(value?: StoredBlock[]): StoredBlock[] {
       events: cloneBlockEvents(record.events)
     };
 
-    normalizedBlocks.push(block.type === 'paragraph' ? createParagraphBlock(getParagraphText(block), block.id) : cloneStoredBlock(block));
+    normalizedBlocks.push(block.type === 'paragraph' ? createParagraphBlock(getParagraphTextValue(block), block.id) : cloneStoredBlock(block));
   });
 
   return mergeParagraphBlocks(normalizedBlocks);

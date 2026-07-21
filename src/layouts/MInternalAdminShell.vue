@@ -6,6 +6,8 @@ import {
   normalizeHref,
   readString
 } from '@/layouts/topNavRuntime';
+import { resolveLayoutText } from '@/layouts/localization';
+import { useI18n } from '@/i18n';
 
 defineOptions({
   name: 'MInternalAdminShell'
@@ -49,12 +51,6 @@ type AdminTab = {
   closable: boolean;
 };
 
-const defaultHeaderTools: HeaderTool[] = [
-  { id: 'fullscreen', label: '全屏', icon: 'fullscreen', href: '#' },
-  { id: 'type-scale', label: '文字', icon: 'type', href: '#' },
-  { id: 'translate', label: '翻译', icon: 'translate', href: '#' }
-];
-
 const iconPaths: Record<string, string> = {
   menu: 'M4 6h16M4 12h16M4 18h16',
   search: 'M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z',
@@ -82,10 +78,17 @@ const props = withDefaults(defineProps<{
   data: () => ({})
 });
 
+const { t } = useI18n();
+const defaultHeaderTools = computed<HeaderTool[]>(() => [
+  { id: 'fullscreen', label: t('layout.internalAdmin.fullscreen'), icon: 'fullscreen', href: '#' },
+  { id: 'type-scale', label: t('layout.internalAdmin.typeScale'), icon: 'type', href: '#' },
+  { id: 'translate', label: t('layout.internalAdmin.translate'), icon: 'translate', href: '#' }
+]);
+
 const shellData = computed(() => props.data ?? {});
-const environmentLabel = computed(() => readString(shellData.value.environmentLabel) || '测试环境');
-const searchPlaceholder = computed(() => readString(shellData.value.searchPlaceholder) || '搜索菜单...');
-const favoriteMenuTitle = computed(() => readString(shellData.value.favoriteMenuTitle) || '收藏菜单');
+const environmentLabel = computed(() => readLayoutText(shellData.value.environmentLabel) || t('layout.internalAdmin.testEnvironment'));
+const searchPlaceholder = computed(() => readLayoutText(shellData.value.searchPlaceholder) || t('layout.internalAdmin.searchMenu'));
+const favoriteMenuTitle = computed(() => readLayoutText(shellData.value.favoriteMenuTitle) || t('layout.internalAdmin.favoriteMenu'));
 const sidebarItems = computed(() => readMenuResource('sidebarMenu', 'sidebarMenu'));
 const favoriteItems = computed(() => readMenuResource('favoriteMenu', 'favoriteMenu'));
 const quickItems = computed(() => readMenuResource('quickMenu', 'quickMenu'));
@@ -121,7 +124,7 @@ function normalizeAdminMenuItems(value: unknown): AdminMenuItem[] {
     .filter((item): item is Record<string, unknown> => isRecord(item))
     .map((item) => {
       const children = normalizeAdminMenuItems(item.children);
-      const label = readString(item.label) || readString(item.name);
+      const label = readLayoutText(item.label) || readLayoutText(item.name);
       const href = normalizeHref(readString(item.href) || readString(item.url) || '#');
       const expanded = typeof item.expanded === 'boolean'
         ? item.expanded
@@ -148,62 +151,69 @@ function normalizeHeader(value: unknown): HeaderConfig {
   const authUserName = isRecord(authUser) ? readString(authUser.name) : '';
 
   return {
-    breadcrumb: breadcrumb.length ? breadcrumb : ['首页'],
-    tutorialLabel: readString(source.tutorialLabel) || '权限申请教程',
+    breadcrumb: breadcrumb.length ? breadcrumb : [t('layout.internalAdmin.home')],
+    tutorialLabel: readLayoutText(source.tutorialLabel) || t('layout.internalAdmin.permissionGuide'),
     tutorialUrl: normalizeHref(readString(source.tutorialUrl) || '#'),
     tools: normalizeHeaderTools(source.tools),
-    user: normalizeHeaderUser(source.user, authUserName || '管理员')
+    user: normalizeHeaderUser(source.user, authUserName || t('layout.internalAdmin.administrator'))
   };
 }
 
 function normalizeHeaderTools(value: unknown): HeaderTool[] {
-  if (!Array.isArray(value)) return defaultHeaderTools;
+  if (!Array.isArray(value)) return defaultHeaderTools.value;
 
   const tools = value
     .filter((tool): tool is Record<string, unknown> => isRecord(tool))
     .map((tool) => ({
       id: readString(tool.id) || undefined,
-      label: readString(tool.label) || readString(tool.id) || '工具',
+      label: readLayoutText(tool.label) || readString(tool.id) || t('layout.internalAdmin.tool'),
       icon: readString(tool.icon) || readString(tool.id) || 'settings',
       href: normalizeHref(readString(tool.href) || readString(tool.url) || '#')
     }))
     .filter((tool) => tool.label);
 
-  return tools.length ? tools : defaultHeaderTools;
+  return tools.length ? tools : defaultHeaderTools.value;
 }
 
 function normalizeHeaderUser(value: unknown, fallbackName: string): HeaderUser {
   const source = isRecord(value) ? value : {};
 
   return {
-    name: readString(source.name) || fallbackName,
+    name: readLayoutText(source.name) || fallbackName,
     avatarText: readString(source.avatarText) || undefined
   };
 }
 
 function normalizeTabs(value: unknown): AdminTab[] {
   if (!Array.isArray(value)) {
-    return [{ label: '首页', href: '#', active: true, closable: true }];
+    return [{ label: t('layout.internalAdmin.home'), href: '#', active: true, closable: true }];
   }
 
   const normalized = value
     .filter((tab): tab is Record<string, unknown> => isRecord(tab))
     .map((tab) => ({
-      label: readString(tab.label) || readString(tab.name),
+      label: readLayoutText(tab.label) || readLayoutText(tab.name),
       href: normalizeHref(readString(tab.href) || readString(tab.url) || '#'),
       active: tab.active === true,
       closable: tab.closable !== false
     }))
     .filter((tab) => tab.label);
 
-  return normalized.length ? normalized : [{ label: '首页', href: '#', active: true, closable: true }];
+  return normalized.length ? normalized : [{ label: t('layout.internalAdmin.home'), href: '#', active: true, closable: true }];
 }
 
 function normalizeStringList(value: unknown) {
-  if (typeof value === 'string') return value ? [value] : [];
+  if (typeof value === 'string' || isRecord(value)) {
+    const text = readLayoutText(value);
+    return text ? [text] : [];
+  }
   if (!Array.isArray(value)) return [];
 
-  return value.map((item) => readString(item)).filter(Boolean);
+  return value.map((item) => readLayoutText(item)).filter(Boolean);
+}
+
+function readLayoutText(value: unknown) {
+  return resolveLayoutText(value, props.context?.layout);
 }
 
 function getIconPath(icon: unknown) {
@@ -316,7 +326,7 @@ function readTextValue(value: unknown) {
               v-if="item.children?.length"
               class="internal-admin-shell__menu-toggle"
               type="button"
-              :aria-label="`${isMenuItemExpanded(item) ? '收起' : '展开'}${item.label}`"
+              :aria-label="`${isMenuItemExpanded(item) ? t('layout.internalAdmin.collapse') : t('layout.internalAdmin.expand')}${item.label}`"
               :aria-expanded="isMenuItemExpanded(item)"
               @click="toggleMenuItem(item)"
             >
@@ -373,7 +383,7 @@ function readTextValue(value: unknown) {
 
     <section class="internal-admin-shell__main">
       <header data-testid="internal-admin-header" class="internal-admin-shell__header">
-        <button class="internal-admin-shell__icon-button" type="button" aria-label="切换菜单">
+        <button class="internal-admin-shell__icon-button" type="button" :aria-label="t('layout.internalAdmin.toggleMenu')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path :d="getIconPath('menu')" />
           </svg>
@@ -417,7 +427,7 @@ function readTextValue(value: unknown) {
       </header>
 
       <section data-testid="internal-admin-quick-menu" class="internal-admin-shell__quick-menu">
-        <span class="internal-admin-shell__quick-label">快捷菜单:</span>
+        <span class="internal-admin-shell__quick-label">{{ t('layout.internalAdmin.quickMenu') }}:</span>
         <a
           v-for="item in quickItems"
           :key="`${item.label}-${item.href}`"

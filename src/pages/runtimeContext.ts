@@ -5,6 +5,7 @@ import {
   type DatasourceRuntimeData
 } from '@/datasource/runtime';
 import { readRuntimePath, type VariableValueResolveContext } from '@/runtime/variableValue';
+import type { PageLocaleConfig } from '@/runtime/localization';
 
 export type PageRuntimeContext = Record<string, unknown>;
 export type PageRuntimeData = Record<string, unknown>;
@@ -38,6 +39,7 @@ export type PageDataSourceConfig =
 export const PageRuntimeContextKey: InjectionKey<ComputedRef<PageRuntimeContext>> = Symbol('PageRuntimeContext');
 export const PageRuntimeDataKey: InjectionKey<ComputedRef<PageRuntimeData>> = Symbol('PageRuntimeData');
 export const PageRuntimeVariableContextKey: InjectionKey<ComputedRef<VariableValueResolveContext>> = Symbol('PageRuntimeVariableContext');
+export const PageLocaleConfigKey: InjectionKey<ComputedRef<PageLocaleConfig>> = Symbol('PageLocaleConfig');
 
 export function isPageRuntimeRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

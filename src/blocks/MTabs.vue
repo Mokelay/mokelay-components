@@ -1,10 +1,11 @@
 <script lang="ts">
 import { i18n } from '@/i18n';
 import type { BlockDataField } from '@/runtime/variableValue';
+import { normalizeLocalizedTextValue, type LocalizedTextValue } from '@/runtime/localization';
 
 export type MTabsTab = {
   id: string;
-  name: string;
+  name: LocalizedTextValue;
   pageUUID: string;
   /** Preserved only when both aliases exist so validation can block ambiguity. */
   pageUuid?: string;
@@ -81,14 +82,14 @@ export function normalizeTabs(value: unknown): MTabsTab[] {
     if (!isRecord(item)) return;
 
     const id = readString(item.id);
-    const name = readString(item.name);
+    const name = normalizeLocalizedTextValue(item.name);
     const hasCanonical = Object.prototype.hasOwnProperty.call(item, 'pageUUID');
     const hasLegacy = Object.prototype.hasOwnProperty.call(item, 'pageUuid');
     const canonicalPageUUID = readString(item.pageUUID);
     const legacyPageUuid = readString(item.pageUuid);
     const pageUUID = canonicalPageUUID || legacyPageUuid;
     const query = normalizeQueryMapping(item.query);
-    if (!id || !name || !pageUUID || seenIds.has(id)) return;
+    if (!id || (typeof name === 'string' && !name) || !pageUUID || seenIds.has(id)) return;
 
     seenIds.add(id);
     tabs.push({
@@ -141,8 +142,11 @@ import { i18n as runtimeI18n } from '@/i18n';
 import { loadMokelayPage, type MokelayPage } from '@/pages/domain';
 import {
   PageRuntimeContextKey,
+  PageLocaleConfigKey,
   type PageRuntimeContext
 } from '@/pages/runtimeContext';
+import { languageValue } from '@/runtime/globalSettingsRuntime';
+import { normalizePageLocaleConfig, resolveLocalizedValue } from '@/runtime/localization';
 import {
   PreviewBlockRuntimeKey
 } from '@/runtime/previewBlockRuntime';
@@ -155,6 +159,7 @@ const props = defineProps<MTabsProps & {
 
 const previewRuntime = inject(PreviewBlockRuntimeKey, null);
 const parentRuntimeContext = inject(PageRuntimeContextKey, computed<PageRuntimeContext>(() => ({})));
+const pageLocaleConfig = inject(PageLocaleConfigKey, computed(() => normalizePageLocaleConfig(undefined)));
 const pageReferenceAncestry = inject(PageReferenceAncestryKey, computed<readonly string[]>(() => []));
 const normalizedTabs = computed(() => normalizeTabs(props.tabs));
 const internalActiveTabId = ref('');
@@ -166,6 +171,12 @@ let pageLoadId = 0;
 const activeTabId = computed(() => normalizeActiveTabId(internalActiveTabId.value, normalizedTabs.value));
 const activeTab = computed(() => normalizedTabs.value.find((tab) => tab.id === activeTabId.value));
 const hasActivePageBlocks = computed(() => Boolean(activePage.value?.blocks.length));
+
+function displayTabName(name: MTabsTab['name']) {
+  return typeof name === 'string'
+    ? name
+    : resolveLocalizedValue(name, languageValue.value === 'en' ? 'en-US' : 'zh-CN', pageLocaleConfig.value);
+}
 
 function getTabsSignature() {
   return JSON.stringify(normalizedTabs.value);
@@ -398,7 +409,7 @@ onMounted(() => {
             role="tab"
             @click="setActiveTabId(tab.id)"
           >
-            {{ tab.name }}
+            {{ displayTabName(tab.name) }}
           </button>
         </div>
       </div>

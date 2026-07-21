@@ -833,6 +833,24 @@ export const enMessages = {
       small: 'Small'
     }
   },
+  layout: {
+    internalAdmin: {
+      fullscreen: 'Fullscreen',
+      typeScale: 'Text size',
+      translate: 'Translate',
+      testEnvironment: 'Test environment',
+      searchMenu: 'Search menu...',
+      favoriteMenu: 'Favorites',
+      home: 'Home',
+      permissionGuide: 'Permission guide',
+      administrator: 'Administrator',
+      tool: 'Tool',
+      collapse: 'Collapse ',
+      expand: 'Expand ',
+      toggleMenu: 'Toggle menu',
+      quickMenu: 'Quick menu'
+    }
+  },
   page: {
     toolboxTitle: 'Page',
     backToPages: 'Back to pages',

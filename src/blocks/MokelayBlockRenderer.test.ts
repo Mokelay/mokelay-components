@@ -4,10 +4,99 @@ import { defineComponent, h } from 'vue';
 import { flushPromises, mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import MPage from './MPage.vue';
+import MHeading from './MHeading.vue';
 import MokelayBlockRenderer from './MokelayBlockRenderer.vue';
 import { registerMokelayBlock } from './runtimeRegistry';
+import { configureMokelayComponents } from '@/runtime/adapter';
 
 describe('runtime block rendering', () => {
+  it('renders localized headings when mounted directly by the editor', async () => {
+    configureMokelayComponents({ getGlobalSetting: (key) => key === 'language' ? 'en' : 'light' });
+    const wrapper = mount(MHeading, {
+      props: {
+        edit: true,
+        text: { $i18n: { 'zh-CN': '页面标题', 'en-US': 'Page title' } }
+      }
+    });
+
+    expect(wrapper.get('h1').text()).toBe('Page title');
+    expect(wrapper.text()).not.toContain('$i18n');
+    configureMokelayComponents({});
+  });
+
+  it('resolves localized input placeholders from the host language', async () => {
+    configureMokelayComponents({ getGlobalSetting: (key) => key === 'language' ? 'en' : 'light' });
+    const wrapper = mount(MPage, {
+      props: {
+        localeConfig: { defaultLocale: 'zh-CN', supportedLocales: ['zh-CN', 'en-US'] },
+        value: [{ id: 'keyword', type: 'MInput', data: { placeholder: { $i18n: { 'zh-CN': '请输入', 'en-US': 'Enter' } } } }]
+      }
+    });
+    await vi.waitFor(async () => {
+      await flushPromises();
+      expect(wrapper.get('input').attributes('placeholder')).toBe('Enter');
+    });
+    configureMokelayComponents({});
+  });
+
+  it('resolves localized paragraph HTML before inline templates', async () => {
+    configureMokelayComponents({ getGlobalSetting: (key) => key === 'language' ? 'en' : 'light' });
+    const wrapper = mount(MPage, {
+      props: {
+        pageId: 'localized-page',
+        localeConfig: { defaultLocale: 'zh-CN', supportedLocales: ['zh-CN', 'en-US'] },
+        dataSources: [{ key: 'profile', type: 'static', value: { name: 'Ada' } }],
+        value: [{
+          id: 'intro',
+          type: 'paragraph',
+          data: {
+            text: {
+              $i18n: {
+                'zh-CN': '<b>你好</b>',
+                'en-US': '<strong>Hello {{ dataSources.profile.name }}</strong>'
+              }
+            }
+          }
+        }]
+      }
+    });
+
+    await flushPromises();
+    expect(wrapper.get('p').html()).toContain('<strong>Hello Ada</strong>');
+    configureMokelayComponents({});
+  });
+
+  it('resolves localized blocks nested in advance-table cells', async () => {
+    configureMokelayComponents({ getGlobalSetting: (key) => key === 'language' ? 'en' : 'light' });
+    const wrapper = mount(MPage, {
+      props: {
+        localeConfig: { defaultLocale: 'zh-CN', supportedLocales: ['zh-CN', 'en-US'] },
+        value: [{
+          id: 'docs',
+          type: 'MAdvanceTable',
+          data: {
+            rows: [{}],
+            columns: [{
+              columnName: { $i18n: { 'zh-CN': '操作', 'en-US': 'Actions' } },
+              columnContent: [{
+                id: 'enable',
+                type: 'MButton',
+                data: { label: { $i18n: { 'zh-CN': '启用', 'en-US': 'Enable' } } }
+              }]
+            }]
+          }
+        }]
+      }
+    });
+
+    await vi.waitFor(async () => {
+      await flushPromises();
+      expect(wrapper.get('button').text()).toBe('Enable');
+    });
+    expect(wrapper.text()).toContain('Actions');
+    configureMokelayComponents({});
+  });
+
   it('renders an existing page document while edit=true stays preview-only', async () => {
     const wrapper = mount(MPage, {
       props: {
