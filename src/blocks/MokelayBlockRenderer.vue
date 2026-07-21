@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import {
+  getMokelayBlockDefinition,
   loadMokelayBlockDefinition,
   isMokelayBlockRegistered
 } from '@/blocks/runtimeRegistry';
@@ -43,7 +44,9 @@ const pageVariableContext = inject(PageRuntimeVariableContextKey, computed<Varia
 const pageLocaleConfig = inject(PageLocaleConfigKey, computed(() => normalizePageLocaleConfig(undefined, languageValue.value)));
 const pageReferenceAncestry = inject(PageReferenceAncestryKey, computed<readonly string[]>(() => []));
 const componentInstance = shallowRef<unknown | null>(null);
-const loadedDefinition = shallowRef<MokelayBlockRenderDefinition | undefined>();
+const loadedDefinition = shallowRef<MokelayBlockRenderDefinition | undefined>(
+  getMokelayBlockDefinition(props.block.type)
+);
 const componentLoadError = ref('');
 const runtimeBlockData = shallowRef<Record<string, Record<string, unknown>>>({});
 let registeredId = '';
@@ -384,6 +387,8 @@ watch(
 watch(
   () => props.block.type,
   () => {
+    loadedDefinition.value = getMokelayBlockDefinition(props.block.type);
+    if (loadedDefinition.value) return;
     void loadBlockComponent();
   }
 );

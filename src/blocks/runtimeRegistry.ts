@@ -115,6 +115,19 @@ export async function loadMokelayBlockDefinition(type: string): Promise<MokelayB
   return pending;
 }
 
+/** Preload definitions so an SSR host can render the real block tree immediately. */
+export async function preloadMokelayBlocks(types: Iterable<string>): Promise<void> {
+  const uniqueTypes = [...new Set([...types].map((type) => type.trim()).filter(Boolean))];
+  const loaded = await Promise.all(uniqueTypes.map(async (type) => ({
+    type,
+    definition: await loadMokelayBlockDefinition(type)
+  })));
+  const missing = loaded.filter(({ definition }) => !definition).map(({ type }) => type);
+  if (missing.length) {
+    throw new Error(`Unregistered Mokelay blocks: ${missing.join(', ')}`);
+  }
+}
+
 export function getRegisteredMokelayBlockNames(): string[] {
   return [...new Set([...Object.keys(builtInLoaders), ...customLoaders.keys()])];
 }

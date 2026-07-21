@@ -6,10 +6,25 @@ import { describe, expect, it, vi } from 'vitest';
 import MPage from './MPage.vue';
 import MHeading from './MHeading.vue';
 import MokelayBlockRenderer from './MokelayBlockRenderer.vue';
-import { registerMokelayBlock } from './runtimeRegistry';
+import { preloadMokelayBlocks, registerMokelayBlock } from './runtimeRegistry';
 import { configureMokelayComponents } from '@/runtime/adapter';
 
 describe('runtime block rendering', () => {
+  it('renders a preloaded block on the first render', async () => {
+    const RuntimeCard = defineComponent({
+      props: { label: String },
+      template: '<strong data-testid="preloaded-card">{{ label }}</strong>'
+    });
+    registerMokelayBlock('TestPreloadedCard', async () => ({ component: RuntimeCard }));
+    await preloadMokelayBlocks(['TestPreloadedCard']);
+
+    const wrapper = mount(MokelayBlockRenderer, {
+      props: { block: { type: 'TestPreloadedCard', data: { label: 'SSR ready' } } }
+    });
+
+    expect(wrapper.get('[data-testid="preloaded-card"]').text()).toBe('SSR ready');
+    expect(wrapper.find('[data-testid="preview-block-loading"]').exists()).toBe(false);
+  });
   it('renders localized headings when mounted directly by the editor', async () => {
     configureMokelayComponents({ getGlobalSetting: (key) => key === 'language' ? 'en' : 'light' });
     const wrapper = mount(MHeading, {
