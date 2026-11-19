@@ -75,8 +75,8 @@ function emitChange(payload: Partial<MRadioGroupFieldProps>) {
   <PageDslBlock block-type="MRadioGroupField">
     <div class="page-dsl-field">
       <div class="page-dsl-options">
-        <label v-for="(option, index) in options" :key="optionValue(index)" class="page-dsl-option">
-          <input
+        <label v-for="(option, index) in options" :key="optionValue(index)" class="page-dsl-option mk-form-check-row">
+          <input class="mk-form-check"
             type="radio"
             :name="fieldId"
             :value="optionValue(index)"
@@ -101,13 +101,9 @@ function emitChange(payload: Partial<MRadioGroupFieldProps>) {
 }
 
 .page-dsl-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
   border: 1px solid rgb(226 232 240);
   border-radius: 8px;
   padding: 9px 11px;
-  font-size: 14px;
 }
 
 .page-dsl-option input {

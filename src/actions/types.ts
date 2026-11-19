@@ -3,6 +3,9 @@ import type { ProcessorConfig } from '@/processors';
 import type { VariableValueResolveContext } from '@/runtime/variableValue';
 
 export type CommonActionName =
+  | 'trigger_event'
+  | 'flush_event'
+  | 'retry_event'
   | 'execute_ds'
   | 'confirm'
   | 'open_dialog'
@@ -62,6 +65,9 @@ export type ActionContext = {
 };
 
 export type ActionExecutorContext = {
+  triggerEvent?: (blockId: string, event: string, payload?: unknown) => Promise<unknown>;
+  requestSnapshot?: import('@/datasource/datasource').DatasourceRequestSnapshot;
+  controlEvent?: (operation: 'flush' | 'retry', blockId: string, event: string) => Promise<unknown>;
   config: ActionConfig;
   inputs: Record<string, unknown>;
   state: ActionContext;

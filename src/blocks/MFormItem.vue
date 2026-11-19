@@ -41,6 +41,8 @@ const props = withDefaults(defineProps<MFormItemProps & {
 });
 const emit = defineEmits<{
   (event: 'click', payload: MouseEvent): void;
+  (event: 'value-change', value: unknown): void;
+  (event: 'ready'): void;
 }>();
 
 const { t } = useI18n();
@@ -106,7 +108,7 @@ watch(
 
 <template>
   <div
-    class="ce-form-item-tool"
+    class="ce-form-item-tool mk-form-scope"
     :class="{
       'ce-form-item-tool--edit': edit,
       'ce-form-item-tool--horizontal': formItem.layout === 'Horizontal'
@@ -116,21 +118,22 @@ watch(
   >
     <div class="ce-form-item-tool__body">
       <div
-        class="ce-form-item-tool__label"
+        class="ce-form-item-tool__label mk-form-label"
         :data-testid="edit ? 'form-item-label-preview' : 'preview-form-item-label'"
       >
-        {{ displayLabelName }}
+        <slot name="label" :text="displayLabelName">{{ displayLabelName }}</slot>
       </div>
       <div
         class="ce-form-item-tool__editor"
         :data-testid="edit ? 'form-item-editor-field' : 'preview-form-item-editor'"
       >
         <slot name="control" :form-item="formItem">
-          <MokelayBlockRenderer v-if="formItem.editor" :block="formItem.editor" />
+          <MokelayBlockRenderer v-if="formItem.editor" :block="formItem.editor" @value-change="emit('value-change', $event)" @ready="emit('ready')" />
           <span v-else class="ce-form-item-tool__empty">{{ t('formItem.emptyEditor') }}</span>
         </slot>
       </div>
     </div>
+    <slot name="help" />
   </div>
 </template>
 
@@ -147,28 +150,21 @@ watch(
   padding: 8px;
 }
 
-.ce-form-item-tool__label {
-  color: rgb(51 65 85);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
-}
 
 .ce-form-item-tool__body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--mk-form-label-gap);
 }
 
 .ce-form-item-tool--horizontal .ce-form-item-tool__body {
   display: grid;
-  grid-template-columns: minmax(96px, max-content) minmax(0, 1fr);
+  grid-template-columns: minmax(96px, 30%) minmax(0, 1fr);
   align-items: start;
   gap: 12px;
 }
 
 .ce-form-item-tool__label {
-  padding-top: 9px;
   word-break: break-word;
 }
 
@@ -178,18 +174,22 @@ watch(
 
 .ce-form-item-tool__empty {
   display: inline-flex;
-  min-height: 38px;
+  min-height: var(--mk-form-control-height);
   align-items: center;
   color: rgb(100 116 139);
   font-size: 14px;
   line-height: 20px;
 }
 
-@media (max-width: 640px) {
+.ce-form-item-tool--horizontal .ce-form-item-tool__label { padding-top: 10px; }
+
+@container (max-width: 420px) {
   .ce-form-item-tool--horizontal .ce-form-item-tool__body {
     display: flex;
     flex-direction: column;
+    gap: var(--mk-form-label-gap);
   }
+  .ce-form-item-tool--horizontal .ce-form-item-tool__label { padding-top: 0; }
 }
 
 .dark .ce-form-item-tool {

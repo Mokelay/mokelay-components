@@ -12,7 +12,7 @@ import {
   type MButtonProps
 } from '@/blocks/MButton.vue';
 
-export type MActionToolbarAlign = 'left' | 'right' | 'space-between';
+export type MActionToolbarAlign = 'left' | 'right' | 'space-between' | 'stretch';
 export type MActionToolbarSize = 'small' | 'medium' | 'large';
 export type MActionToolbarMode = 'inline' | 'grouped' | 'dropdown';
 
@@ -32,7 +32,7 @@ export interface MActionToolbarProps extends MokelayBlockComponentProps {
   actions?: unknown;
 }
 
-const alignValues = ['left', 'right', 'space-between'] as const;
+const alignValues = ['left', 'right', 'space-between', 'stretch'] as const;
 const sizeValues = ['small', 'medium', 'large'] as const;
 const modeValues = ['inline', 'grouped', 'dropdown'] as const;
 
@@ -508,6 +508,16 @@ defineExpose({
   min-width: 0;
   white-space: nowrap;
   cursor: pointer;
+}
+
+.m-action-toolbar--stretch > :deep(.page-dsl-button-wrap),
+.m-action-toolbar--stretch > .m-action-toolbar__dropdown {
+  flex: 1 1 0;
+}
+
+.m-action-toolbar--stretch :deep(.page-dsl-button),
+.m-action-toolbar--stretch .m-action-toolbar__menu-trigger {
+  width: 100%;
 }
 
 .m-action-toolbar--small :deep(.page-dsl-button),

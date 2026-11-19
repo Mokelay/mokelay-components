@@ -1,0 +1,120 @@
+/* Opt-in primitives shared by runtime blocks and every editor form, including teleports. */
+:root {
+  --mk-form-control-height: 40px;
+  --mk-form-radius: 8px;
+  --mk-form-label-gap: 6px;
+  --mk-form-field-gap: 16px;
+  --mk-form-section-gap: 24px;
+  --mk-form-surface: #fff;
+  --mk-form-muted-surface: #f8fafc;
+  --mk-form-border: #cbd5e1;
+  --mk-form-text: #0f172a;
+  --mk-form-label: #334155;
+  --mk-form-muted: #64748b;
+  --mk-form-accent: #4f46e5;
+  --mk-form-focus: rgb(99 102 241 / 0.2);
+  --mk-form-danger: #dc2626;
+}
+
+.dark {
+  --mk-form-surface: #0f172a;
+  --mk-form-muted-surface: #1e293b;
+  --mk-form-border: #475569;
+  --mk-form-text: #f1f5f9;
+  --mk-form-label: #cbd5e1;
+  --mk-form-muted: #94a3b8;
+  --mk-form-accent: #818cf8;
+  --mk-form-danger: #f87171;
+}
+
+.mk-form-scope { container-type: inline-size; }
+.mk-form-stack { display: flex; flex-direction: column; gap: var(--mk-form-field-gap); min-width: 0; }
+.mk-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: var(--mk-form-field-gap); min-width: 0; }
+.mk-form-full { grid-column: 1 / -1; }
+.mk-form-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--mk-form-label-gap);
+  color: var(--mk-form-label);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+.mk-form-field > .mk-form-control { margin: 0; }
+.mk-form-label { color: var(--mk-form-label); font-size: 13px; font-weight: 600; line-height: 20px; overflow-wrap: anywhere; }
+.mk-form-check-row { display: flex; flex-direction: row; align-items: center; gap: 8px; min-height: var(--mk-form-control-height); font-size: 13px; line-height: 20px; color: var(--mk-form-label); }
+.mk-form-check { flex: none; width: 16px; height: 16px; margin: 0; accent-color: var(--mk-form-accent); }
+.mk-form-control {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--mk-form-control-height);
+  margin: 0;
+  border: 1px solid var(--mk-form-border);
+  border-radius: var(--mk-form-radius);
+  padding: 9px 12px;
+  background: var(--mk-form-surface);
+  color: var(--mk-form-text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  transition: border-color .15s, box-shadow .15s;
+}
+select.mk-form-control { height: var(--mk-form-control-height); padding-block: 0; text-overflow: ellipsis; }
+textarea.mk-form-control { min-height: 96px; resize: vertical; }
+.mk-form-control::placeholder { color: var(--mk-form-muted); opacity: 1; }
+.mk-form-control:focus-visible, .mk-form-button:focus-visible, .mk-form-check:focus-visible {
+  outline: 2px solid var(--mk-form-accent); outline-offset: 2px;
+}
+.mk-form-control:focus { border-color: var(--mk-form-accent); box-shadow: 0 0 0 3px var(--mk-form-focus); outline: none; }
+.mk-form-control:disabled, .mk-form-control[readonly], fieldset:disabled .mk-form-control {
+  background: var(--mk-form-muted-surface); color: var(--mk-form-muted);
+}
+.mk-form-control:disabled, fieldset:disabled .mk-form-control { cursor: not-allowed; }
+.mk-form-control[aria-invalid="true"] { border-color: var(--mk-form-danger); }
+.mk-form-help, .mk-form-error { margin: 0; font-size: 12px; font-weight: 400; line-height: 18px; overflow-wrap: anywhere; }
+.mk-form-help { color: var(--mk-form-muted); }
+.mk-form-error { color: var(--mk-form-danger); }
+.mk-form-button {
+  box-sizing: border-box;
+  min-width: 0; min-height: var(--mk-form-control-height); gap: 6px;
+  border: 1px solid var(--mk-form-border); border-radius: var(--mk-form-radius); padding: 9px 12px;
+  background: var(--mk-form-surface); color: var(--mk-form-label); font: inherit; font-size: 14px; line-height: 20px; font-weight: 600;
+  cursor: pointer; overflow-wrap: anywhere;
+}
+.mk-form-button:hover { background: var(--mk-form-muted-surface); }
+.mk-form-button:disabled { cursor: not-allowed; opacity: .55; }
+.mk-form-button--primary { border-color: #4f46e5; background: #4f46e5; color: #fff; }
+.mk-form-button--primary:hover { background: #4338ca; }
+.mk-form-button--danger { color: var(--mk-form-danger); border-color: transparent; background: transparent; }
+.mk-form-button--danger:hover { background: rgb(239 68 68 / .1); }
+
+/* The panel owns scrolling so its header and footer never overlap its fields. */
+.mk-form-dialog {
+  box-sizing: border-box; width: min(640px, calc(100vw - 32px)); max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow: hidden;
+  border: 1px solid var(--mk-form-border); border-radius: 16px;
+  color: var(--mk-form-text); background: var(--mk-form-surface); box-shadow: 0 24px 80px rgb(15 23 42 / .25);
+}
+.mk-form-dialog--wide { width: min(960px, calc(100vw - 32px)); }
+.mk-form-dialog--canvas { width: min(1200px, calc(100vw - 32px)); }
+.mk-form-dialog::backdrop { background: rgb(15 23 42 / .45); }
+.mk-form-dialog-panel { display: flex; flex-direction: column; min-height: 0; max-height: calc(100dvh - 34px); margin: 0; padding: 0; }
+.mk-form-dialog-header, .mk-form-dialog-footer { display: flex; flex: none; align-items: center; gap: 12px; padding: 20px 24px; background: var(--mk-form-surface); }
+.mk-form-dialog-header { justify-content: space-between; border-bottom: 1px solid var(--mk-form-border); }
+.mk-form-dialog-header:is(h2, h3), .mk-form-dialog-header :is(h2, h3) { margin: 0; font-size: 18px; font-weight: 600; line-height: 26px; overflow-wrap: anywhere; }
+.mk-form-dialog-footer { justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--mk-form-border); }
+.mk-form-dialog-body { min-height: 0; min-width: 0; padding: 24px; overflow: auto; overscroll-behavior: contain; }
+
+@media (max-width: 640px) {
+  :root { --mk-form-control-height: 44px; }
+  .mk-form-dialog-header, .mk-form-dialog-footer, .mk-form-dialog-body { padding: 16px; }
+}
+@container (max-width: 520px) {
+  .mk-form-grid { grid-template-columns: minmax(0, 1fr); }
+}

@@ -12,6 +12,7 @@ export interface MInputProps {
   value?: string;
   required?: boolean;
   maxLength?: number;
+  inputMode?: 'decimal';
   disabled?: boolean;
 }
 
@@ -38,6 +39,7 @@ export function normalizeInputProps(props: Partial<MInputProps>): MInputProps {
     edit: props.edit ?? false,
     currentBlockId: normalizeString(props.currentBlockId),
     id: normalizeString(props.id),
+    ...(props.inputMode === 'decimal' ? { inputMode: props.inputMode } : {}),
     placeholder: typeof props.placeholder === 'string' || (typeof props.placeholder === 'object' && props.placeholder !== null && '$i18n' in props.placeholder)
       ? props.placeholder
       : '',
@@ -76,6 +78,7 @@ function emitChange(payload: Partial<MInputProps>) {
     placeholder: props.placeholder,
     value: props.value,
     required: props.required,
+    ...(props.inputMode ? { inputMode: props.inputMode } : {}),
     maxLength: props.maxLength,
     disabled: props.disabled,
     ...payload
@@ -106,11 +109,12 @@ defineExpose({
       ref="inputRef"
       :id="inputDomId || undefined"
       :data-testid="inputDomId || 'editor-input-control'"
-      class="ce-input-tool__control"
+      class="ce-input-tool__control mk-form-control"
       type="text"
       :placeholder="fieldPlaceholder"
       :value="value"
       :required="required"
+      :inputmode="inputMode"
       :maxlength="maxLength"
       :disabled="disabled"
       @input="emitChange({ value: ($event.target as HTMLInputElement).value })"
@@ -125,37 +129,7 @@ defineExpose({
   gap: 8px;
 }
 
-.ce-input-tool__control {
-  width: 100%;
-  border: 1px solid rgb(148 163 184 / 0.6);
-  border-radius: 8px;
-  padding: 8px 10px;
-  background-color: rgb(255 255 255);
-  color: rgb(15 23 42);
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.ce-input-tool__control:focus {
-  outline: none;
-  border-color: rgb(99 102 241);
-  box-shadow: 0 0 0 2px rgb(99 102 241 / 0.15);
-}
-
 .ce-input-tool__control:disabled {
   cursor: not-allowed;
-  background-color: rgb(241 245 249);
-  color: rgb(100 116 139);
-}
-
-.dark .ce-input-tool__control {
-  background-color: rgb(15 23 42);
-  color: rgb(226 232 240);
-  border-color: rgb(71 85 105 / 0.9);
-}
-
-.dark .ce-input-tool__control:disabled {
-  background-color: rgb(30 41 59);
-  color: rgb(148 163 184);
 }
 </style>

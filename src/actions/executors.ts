@@ -273,10 +273,11 @@ async function uploadWithOssToken(file: File, inputs: Record<string, unknown>, s
  *   "examples": [{"action":{"uuid":"load","action":"execute_ds","inputs":{"dsConfig":"{{blocks.query.data}}"},"outputs":["rawResponse","responses"]}}]
  * }
  */
-export const executeDatasourceAction: ActionExecutor = async ({ inputs, state }) => {
+export const executeDatasourceAction: ActionExecutor = async ({ inputs, state, requestSnapshot }) => {
   const dsConfig = datasourceInput(inputs.dsConfig ?? inputs.value ?? inputs);
   const runtimeData = await resolveDatasourceRuntimeData(dsConfig, {
-    variableContext: getActionVariableContext(state)
+    variableContext: getActionVariableContext(state),
+    requestSnapshot
   });
   const failureMessage = mokelayFailureMessage(runtimeData.rawResponse);
   if (failureMessage) {
@@ -610,7 +611,46 @@ export const downloadBlobAction: ActionExecutor = async ({ inputs }) => {
   };
 };
 
+/**
+ * @clientActionDoc {"version": "1.0", "sourcePackage": "mokelay-components", "actionName": "flush_event", "displayName": "等待事件完成", "actionType": "action", "category": "event", "description": "立即执行指定事件的待处理任务并等待完成。", "inputs": [{"key": "blockId", "type": "string", "required": true}, {"key": "event", "type": "string", "required": true}], "outputs": [{"key": "result", "type": "unknown"}], "errors": [{"code": "EVENT_EXECUTION_FAILED", "description": "目标事件执行失败。"}], "config": [], "nodeSchema": [], "runtime": [{"key": "sideEffect", "value": true}, {"key": "async", "value": true}, {"key": "failureMode", "value": "throws"}], "examples": [{"action": {"uuid": "flush_event", "action": "flush_event", "inputs": {"blockId": "form", "event": "change"}}}]}
+ */
+export const flushEventAction: ActionExecutor = async ({ inputs, controlEvent }) => {
+  if (!controlEvent) throw new Error('Event control is unavailable.');
+  return { result: await controlEvent('flush', stringInput(inputs.blockId), stringInput(inputs.event)) };
+};
+/**
+ * @clientActionDoc {"version": "1.0", "sourcePackage": "mokelay-components", "actionName": "retry_event", "displayName": "重试事件", "actionType": "action", "category": "event", "description": "重试指定事件，未确认请求使用原请求快照。", "inputs": [{"key": "blockId", "type": "string", "required": true}, {"key": "event", "type": "string", "required": true}], "outputs": [{"key": "result", "type": "unknown"}], "errors": [{"code": "EVENT_EXECUTION_FAILED", "description": "目标事件执行失败。"}], "config": [], "nodeSchema": [], "runtime": [{"key": "sideEffect", "value": true}, {"key": "async", "value": true}, {"key": "failureMode", "value": "throws"}], "examples": [{"action": {"uuid": "retry_event", "action": "retry_event", "inputs": {"blockId": "form", "event": "change"}}}]}
+ */
+export const retryEventAction: ActionExecutor = async ({ inputs, controlEvent }) => {
+  if (!controlEvent) throw new Error('Event control is unavailable.');
+  return { result: await controlEvent('retry', stringInput(inputs.blockId), stringInput(inputs.event)) };
+};
+
+/**
+ * @clientActionDoc {
+ *   "version": "1.0", "sourcePackage": "mokelay-components", "actionName": "trigger_event",
+ *   "displayName": "触发 Block 事件", "actionType": "action", "category": "event",
+ *   "description": "执行目标 Block 已配置的事件动作并等待完成，不修改字段值或模拟 DOM 事件。",
+ *   "inputs": [{"key":"blockId","type":"string","required":true},{"key":"event","type":"string","required":true},{"key":"payload","type":"unknown","required":false,"description":"传递给目标动作链的 event，默认为空对象。"}],
+ *   "outputs": [{"key":"result","type":"array","description":"匹配事件的动作执行结果，按配置顺序排列。"}],
+ *   "errors": [{"code":"EVENT_EXECUTION_FAILED","description":"目标或事件不存在、循环触发或动作执行失败。"}],
+ *   "config": [], "nodeSchema": [],
+ *   "runtime": [{"key":"sideEffect","value":true},{"key":"async","value":true},{"key":"failureMode","value":"throws"}],
+ *   "examples": [{"action":{"uuid":"sync","action":"trigger_event","inputs":{"blockId":"field","event":"change","payload":{"value":"yes"}}}}]
+ * }
+ */
+export const triggerEventAction: ActionExecutor = async ({ inputs, triggerEvent }) => {
+  if (!triggerEvent) throw new Error('Event triggering is unavailable.');
+  const blockId = stringInput(inputs.blockId).trim();
+  const event = stringInput(inputs.event).trim();
+  if (!blockId || !event) throw new Error('trigger_event requires a blockId and event.');
+  return { result: await triggerEvent(blockId, event, hasOwn(inputs, 'payload') ? inputs.payload : {}) };
+};
+
 export const actionExecutors: Record<string, ActionExecutor> = {
+  trigger_event: triggerEventAction,
+  flush_event: flushEventAction,
+  retry_event: retryEventAction,
   execute_ds: executeDatasourceAction,
   confirm: confirmAction,
   open_dialog: openDialogAction,

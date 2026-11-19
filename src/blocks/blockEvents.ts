@@ -4,9 +4,19 @@ type BlockDocumentData = MokelayBlock;
 type PageDocument = MokelayPageDocument;
 import { cloneActions, normalizeActions, type ActionConfig } from '@/actions';
 
+export type EventExecution = {
+  debounceMs?: number;
+  concurrency?: 'parallel' | 'serialLatest' | 'drop';
+  retry?: 'none' | 'resumeUnconfirmed';
+  flushOn?: ('hidden' | 'unmount')[];
+};
+
 export type BlockEvent = {
   event: string;
   actions: ActionConfig[];
+  execution?: EventExecution;
+  onError?: ActionConfig[];
+  onFinally?: ActionConfig[];
 };
 
 export const INTERNAL_BLOCK_EVENTS_DATA_KEY = '__mokelayBlockEvents';
@@ -45,6 +55,16 @@ export function createEmptyBlockEvent(): BlockEvent {
   };
 }
 
+function normalizeExecution(value: unknown): EventExecution | undefined {
+  if (!isRecord(value)) return undefined;
+  const result: EventExecution = {};
+  if (typeof value.debounceMs === 'number' && Number.isFinite(value.debounceMs) && value.debounceMs > 0) result.debounceMs = Math.min(60000, Math.floor(value.debounceMs));
+  if (value.concurrency === 'serialLatest' || value.concurrency === 'drop') result.concurrency = value.concurrency;
+  if (value.retry === 'resumeUnconfirmed') { result.retry = value.retry; result.concurrency ??= 'serialLatest'; }
+  if (Array.isArray(value.flushOn)) result.flushOn = [...new Set(value.flushOn.filter((v): v is 'hidden' | 'unmount' => v === 'hidden' || v === 'unmount'))];
+  return Object.keys(result).length ? result : undefined;
+}
+
 export function normalizeBlockEvents(value: unknown): BlockEvent[] {
   if (!Array.isArray(value)) {
     return [];
@@ -54,16 +74,16 @@ export function normalizeBlockEvents(value: unknown): BlockEvent[] {
     .filter((item): item is PlainRecord => isRecord(item))
     .map((item) => ({
       event: eventFieldValue(item.event),
-      actions: normalizeActions(item.actions)
+      actions: normalizeActions(item.actions),
+      ...(normalizeExecution(item.execution) ? { execution: normalizeExecution(item.execution) } : {}),
+      ...(normalizeActions(item.onError).length ? { onError: normalizeActions(item.onError) } : {}),
+      ...(normalizeActions(item.onFinally).length ? { onFinally: normalizeActions(item.onFinally) } : {})
     }))
     .filter((item) => item.event && item.actions.length);
 }
 
 export function cloneBlockEvents(value: unknown): BlockEvent[] {
-  return normalizeBlockEvents(value).map((item) => ({
-    event: item.event,
-    actions: cloneActions(item.actions)
-  }));
+  return cloneJsonValue(normalizeBlockEvents(value));
 }
 
 export function getInternalBlockEventsFromData(data: unknown) {

@@ -12,6 +12,7 @@ import {
   type MActionToolbarProps
 } from './MActionToolbar.vue';
 import { normalizeLocalizedTextValue, type LocalizedTextValue } from '@/runtime/localization';
+import { cloneFormItemRules, type MFormItemRules } from './mFormItemProps';
 
 export interface MFormItemData {
   labelName: LocalizedTextValue;
@@ -20,6 +21,7 @@ export interface MFormItemData {
   editor?: StoredBlock;
   layout: MFormItemLayout;
   hidden?: boolean;
+  rules?: MFormItemRules;
   events?: BlockEvent[];
 }
 
@@ -94,6 +96,7 @@ export function cloneFormItemData(item: MFormItemDataInput): MFormItemData {
   const editor = normalizeSelectorBlock(item.editor);
   const events = cloneBlockEvents(item.events);
   const fieldDataType = normalizeOptionalString(item.fieldDataType);
+  const rules = cloneFormItemRules(item.rules);
 
   return {
     labelName,
@@ -102,6 +105,7 @@ export function cloneFormItemData(item: MFormItemDataInput): MFormItemData {
     ...(editor ? { editor: cloneSelectorBlock(editor) } : {}),
     layout: item.layout === 'Horizontal' ? 'Horizontal' : 'Vertical',
     ...(item.hidden === true || item.visible === false ? { hidden: true } : {}),
+    ...(rules ? { rules } : {}),
     events
   };
 }
@@ -112,7 +116,7 @@ export function normalizeMFormItem(value: unknown): MFormItemData | undefined {
 
 export function normalizeMFormItems(value: unknown): MFormItemData[] {
   if (!Array.isArray(value)) return [];
-  return value.map(normalizeMFormItem).filter((item): item is MFormItemData => Boolean(item));
+  return value.map(normalizeMFormItem).filter((item): item is MFormItemData => !!item);
 }
 
 export function normalizeMFormValues(value: unknown): Record<string, unknown> {

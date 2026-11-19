@@ -8,12 +8,27 @@ import { normalizeLocalizedTextValue, type LocalizedTextValue } from '@/runtime/
 
 export type MFormItemLayout = 'Vertical' | 'Horizontal';
 
+export interface MFormItemRules {
+  visibleWhen?: { field: string; equals?: string };
+  hint?: string;
+  description?: string;
+  pattern?: string;
+  invalidMessage?: string;
+  readOnly?: boolean;
+}
+
+export function cloneFormItemRules(rules?: MFormItemRules): MFormItemRules | undefined {
+  if (!rules || !Object.keys(rules).length) return undefined;
+  return { ...rules, ...(rules.visibleWhen ? { visibleWhen: { ...rules.visibleWhen } } : {}) };
+}
+
 export interface MFormItemProps {
   edit: boolean;
   labelName?: LocalizedTextValue;
   variableName?: string;
   editor?: StoredBlock;
   layout?: MFormItemLayout;
+  rules?: MFormItemRules;
 }
 
 export type NormalizedMFormItemProps = Omit<MFormItemProps, 'labelName' | 'variableName' | 'layout'> & {
@@ -60,6 +75,7 @@ export function normalizeFormItemProps(props: Partial<MFormItemProps>, fallbackV
     labelName: normalizeLabelName(props.labelName),
     variableName: normalizeVariableName(props.variableName, fallbackVariableName),
     editor: normalizeSelectorBlock(props.editor),
+    rules: cloneFormItemRules(props.rules),
     layout: normalizeLayout(props.layout)
   };
 }
@@ -70,6 +86,7 @@ export function serializeFormItemProps(props: Partial<MFormItemProps>) {
     labelName: normalized.labelName,
     variableName: normalized.variableName,
     ...(normalized.editor ? { editor: cloneEditorBlock(normalized.editor) } : {}),
+    ...(normalized.rules ? { rules: normalized.rules } : {}),
     layout: normalized.layout
   };
 }

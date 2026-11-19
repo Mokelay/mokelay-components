@@ -92,8 +92,8 @@ function toggleArrayValue(value: string, checked: boolean) {
   <PageDslBlock block-type="MImageChoiceField">
     <div class="page-dsl-field">
       <div class="page-dsl-image-options">
-        <label v-for="(option, index) in options" :key="optionValue(index)" class="page-dsl-image-option">
-          <input
+        <label v-for="(option, index) in options" :key="optionValue(index)" class="page-dsl-image-option mk-form-field">
+          <input class="mk-form-check"
             :type="multiple ? 'checkbox' : 'radio'"
             :name="fieldId"
             :value="optionValue(index)"
@@ -122,16 +122,13 @@ function toggleArrayValue(value: string, checked: boolean) {
 }
 
 .page-dsl-image-option {
-  display: grid;
-  gap: 8px;
   border: 1px solid rgb(226 232 240);
   border-radius: 8px;
   padding: 8px;
-  font-size: 13px;
 }
 
 .page-dsl-image-option input {
-  justify-self: start;
+  align-self: start;
 }
 
 .page-dsl-image-option img {

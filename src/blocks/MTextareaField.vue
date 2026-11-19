@@ -103,7 +103,7 @@ defineExpose({
         ref="textareaRef"
         :id="fieldId"
         :data-testid="fieldId"
-        class="page-dsl-control"
+        class="page-dsl-control mk-form-control"
         :rows="textareaRows"
         :placeholder="fieldPlaceholder"
         :value="stringInputValue"
@@ -122,37 +122,7 @@ defineExpose({
   gap: 8px;
 }
 
-.page-dsl-control {
-  width: 100%;
-  border: 1px solid rgb(148 163 184 / 0.65);
-  border-radius: 8px;
-  padding: 9px 11px;
-  background: rgb(255 255 255);
-  color: rgb(15 23 42);
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.page-dsl-control:focus {
-  outline: none;
-  border-color: rgb(99 102 241);
-  box-shadow: 0 0 0 2px rgb(99 102 241 / 0.14);
-}
-
 .page-dsl-control:disabled {
   cursor: not-allowed;
-  background: rgb(241 245 249);
-  color: rgb(100 116 139);
-}
-
-.dark .page-dsl-control {
-  border-color: rgb(71 85 105);
-  background: rgb(15 23 42);
-  color: rgb(226 232 240);
-}
-
-.dark .page-dsl-control:disabled {
-  background: rgb(30 41 59);
-  color: rgb(148 163 184);
 }
 </style>

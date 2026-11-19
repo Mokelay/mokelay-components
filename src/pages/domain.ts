@@ -15,6 +15,7 @@ export type MokelayPage = {
   dataSources?: PageDataSourceConfig[];
   localeConfig: PageLocaleConfig;
   appUuid?: string | null;
+  assetApp?: string;
   layoutUuid?: string | null;
   subPage: boolean;
   quotes: string[];
@@ -44,6 +45,7 @@ export function normalizeMokelayPage(page: unknown): MokelayPage {
 
   return {
     uuid,
+    ...(typeof page.assetApp === 'string' ? { assetApp: page.assetApp } : {}),
     name: readString(page.name) ?? '',
     blocks: Array.isArray(page.blocks) ? page.blocks as MokelayBlock[] : [],
     dataSources: normalizePageDataSources(page.dataSources ?? page.data_sources),

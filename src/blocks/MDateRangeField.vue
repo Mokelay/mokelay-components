@@ -198,7 +198,7 @@ defineExpose({
 
 <template>
   <PageDslBlock block-type="MDateRangeField">
-    <div class="page-dsl-date-range" data-testid="date-range-picker">
+    <div class="page-dsl-date-range mk-form-scope" data-testid="date-range-picker">
       <ElDatePicker
         :id="pickerInputIds"
         v-model="pickerValue"
@@ -222,13 +222,16 @@ defineExpose({
   min-width: 0;
 }
 
-:deep(.page-dsl-date-range__picker) {
+.page-dsl-date-range :deep(.page-dsl-date-range__picker) {
   width: 100%;
   min-width: 0;
+  min-height: var(--mk-form-control-height);
+  border-radius: var(--mk-form-radius);
+  --el-color-primary: var(--mk-form-accent);
 }
 
 :deep(.page-dsl-date-range__picker .el-range-input) {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 :deep(.page-dsl-date-range__picker .el-range-separator) {
@@ -243,8 +246,8 @@ defineExpose({
   --el-text-color-placeholder: rgb(148 163 184);
 }
 
-@media (max-width: 520px) {
-  :deep(.page-dsl-date-range__picker) {
+@container (max-width: 520px) {
+  .page-dsl-date-range :deep(.page-dsl-date-range__picker) {
     height: auto;
     align-items: stretch;
     flex-wrap: wrap;

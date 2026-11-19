@@ -1,3 +1,4 @@
+import './styles/forms.css';
 export * from './runtime';
 export * from './blocks';
 export * from './processors';

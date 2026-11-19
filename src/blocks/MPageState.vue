@@ -75,7 +75,7 @@ function inferDataType(value: unknown): VariableValueDataType {
   return 'object';
 }
 
-function getPageStateDataFields(data: Record<string, unknown>): BlockDataField[] {
+export function getPageStateDataFields(data: Record<string, unknown>): BlockDataField[] {
   const initialState = normalizeInitialState(data.initialState);
   return Object.entries(initialState).map(([key, value]) => ({
     label: key,

@@ -35,6 +35,8 @@ const props = withDefaults(defineProps<MokelayBlockRendererProps>(), {
   compactTable: false
 });
 
+const emit = defineEmits<{ (event: 'value-change', value: unknown): void; (event: 'ready'): void }>();
+
 const tableClass = computed(() =>
   props.compactTable ? 'min-w-full border-collapse text-xs' : 'min-w-full border-collapse text-sm'
 );
@@ -199,7 +201,7 @@ function getBlockProps(block: MokelayBlock) {
       currentBlockId
     }) ?? { ...data, edit: false, currentBlockId }),
     currentBlockId,
-    onChange: notifyRuntimeValueChange,
+    onChange: handleRuntimeChange,
     onToolChange: notifyRuntimeValueChange
   };
 }
@@ -221,6 +223,11 @@ async function loadBlockComponent() {
     if (loadId !== componentLoadId) return;
     componentLoadError.value = error instanceof Error ? error.message : String(error);
   }
+}
+
+function handleRuntimeChange(payload: unknown) {
+  if (isRecord(payload) && Object.prototype.hasOwnProperty.call(payload, 'value')) emit('value-change', payload.value);
+  notifyRuntimeValueChange();
 }
 
 function notifyRuntimeValueChange() {
@@ -273,18 +280,30 @@ function registerCurrentBlock() {
     id,
     type: props.block.type,
     instance,
-    data: resolvedBlockData.value
+    data: resolvedBlockData.value,
+    getEventSource: createEventSource
   });
   registeredId = id;
   registeredInstance = instance;
 }
 
 function setComponentRef(instance: unknown) {
-  unregisterCurrentBlock();
+  if (registeredInstance !== instance) unregisterCurrentBlock();
   componentInstance.value = instance;
   if (instance) {
     registerCurrentBlock();
+    emit('ready');
   }
+}
+
+function createEventSource(): PreviewRuntimeBlock {
+  return {
+    ...props.block,
+    data: resolvedBlockData.value,
+    events: normalizeBlockEvents(resolveBlockRuntimeValue(props.block.events)),
+    _pageAncestry: [...pageReferenceAncestry.value],
+    _variableContext: getVariableResolveContext()
+  };
 }
 
 const blockEventListeners = computed(() => {
@@ -296,12 +315,7 @@ const blockEventListeners = computed(() => {
     const previousListener = listeners[eventConfig.event];
     listeners[eventConfig.event] = (event: unknown) => {
       previousListener?.(event);
-      previewRuntime?.invokeBlockActions(eventConfig, {
-        ...props.block,
-        data: resolvedBlockData.value,
-        _pageAncestry: [...pageReferenceAncestry.value],
-        _variableContext: getVariableResolveContext()
-      } as PreviewRuntimeBlock & { _pageAncestry: string[] }, event);
+      previewRuntime?.invokeBlockActions(eventConfig, createEventSource(), event);
     };
   });
 
@@ -378,7 +392,7 @@ function resetBlockDataSubscriptions() {
 watch(
   () => [props.block.id, props.block.type, resolvedBlockData.value],
   () => {
-    unregisterCurrentBlock();
+    if (registeredId !== getBlockId(props.block)) unregisterCurrentBlock();
     registerCurrentBlock();
   },
   { deep: true }
@@ -421,7 +435,15 @@ onBeforeUnmount(() => {
 });
 
 onMounted(() => {
-  void loadBlockComponent();
+  if (props.block.type === 'MEditorSelector') {
+    if (!selectedSelectorBlock.value) emit('ready');
+    return;
+  }
+  if (['paragraph', 'table'].includes(props.block.type) || !isCustomBlock(props.block.type)) {
+    emit('ready');
+    return;
+  }
+  if (!loadedDefinition.value) void loadBlockComponent();
 });
 </script>
 
@@ -453,7 +475,7 @@ onMounted(() => {
     class="min-w-0"
     data-testid="preview-editor-selector-value"
   >
-    <MokelayBlockRenderer v-if="selectedSelectorBlock" :block="selectedSelectorBlock" />
+    <MokelayBlockRenderer v-if="selectedSelectorBlock" :block="selectedSelectorBlock" @ready="emit('ready')" @value-change="emit('value-change', $event)" />
   </div>
 
   <p v-else-if="isCustomBlock(block.type) && componentLoadError" class="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/60 dark:bg-red-950/30 dark:text-red-200">

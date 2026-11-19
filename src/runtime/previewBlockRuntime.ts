@@ -1,8 +1,9 @@
 import type { InjectionKey } from 'vue';
 import type { MokelayBlock } from '@/blocks/types';
-import type { BlockEvent } from '@/blocks/blockEvents';
+import { normalizeBlockEvents, type BlockEvent } from '@/blocks/blockEvents';
 import type { ActionConfig, ActionContext } from '@/actions/types';
-import { runActionGraph } from '@/actions/runner';
+import { createEventScheduler } from './eventScheduler';
+import { runActionGraph, type ActionCheckpoint } from '@/actions/runner';
 import { $message } from '@/components/global-calls/globalCalls';
 import type { VariableValueResolveContext } from '@/runtime/variableValue';
 
@@ -21,6 +22,7 @@ export type BlockRuntimeHandle = {
   type: string;
   instance: unknown;
   data?: Record<string, unknown>;
+  getEventSource?: () => PreviewRuntimeBlock;
 };
 
 export type BlockMethodInvocation = {
@@ -34,6 +36,7 @@ export type BlockMethodInvocation = {
 };
 
 export type PreviewBlockRuntime = {
+  triggerBlockEvent: (blockId: string, event: string, payload?: unknown) => Promise<Array<ActionContext | undefined>>;
   registerBlock: (id: string, handle: BlockRuntimeHandle) => void;
   unregisterBlock: (id: string, instance?: unknown) => void;
   invokeBlockActions: (eventConfig: BlockEvent, sourceBlock: PreviewRuntimeBlock, event: unknown) => Promise<ActionContext | undefined>;
@@ -84,9 +87,48 @@ async function resolveBlockData(handle: BlockRuntimeHandle) {
 export function createPreviewBlockRuntime(): PreviewBlockRuntime {
   const handles = new Map<string, BlockRuntimeHandle>();
   const dataChangeListeners = new Map<string, Set<() => void>>();
+  const eventHandles = new WeakMap<PreviewRuntimeBlock, Map<string, BlockRuntimeHandle>>();
+  const eventDependencies = new Map<string, Map<string, number>>();
+  const eventKey = (id: string, event: string) => JSON.stringify([id, event]);
 
-  async function getBlockDataContext(excludeBlockId?: string) {
-    const entries = await Promise.all([...handles.values()]
+  function reaches(from: string, target: string, visited = new Set<string>()): boolean {
+    if (from === target) return true;
+    if (visited.has(from)) return false;
+    visited.add(from);
+    return [...(eventDependencies.get(from)?.keys() ?? [])].some(next => reaches(next, target, visited));
+  }
+
+  async function waitForEvent<T>(source: PreviewRuntimeBlock, config: BlockEvent | undefined, blockId: string, event: string, execute: () => Promise<T>) {
+    if (!source.id || !config) return execute();
+    const from = eventKey(source.id, config.event);
+    const to = eventKey(blockId, event);
+    if (reaches(to, from)) throw new Error(`Circular event dependency: ${source.id}.${config.event} -> ${blockId}.${event}`);
+    const targets = eventDependencies.get(from) ?? new Map<string, number>();
+    targets.set(to, (targets.get(to) ?? 0) + 1);
+    eventDependencies.set(from, targets);
+    try { return await execute(); }
+    finally {
+      const count = (targets.get(to) ?? 1) - 1;
+      if (count) targets.set(to, count); else targets.delete(to);
+      if (!targets.size) eventDependencies.delete(from);
+    }
+  }
+
+  async function triggerBlockEvent(blockId: string, event: string, payload: unknown = {}, contextHandles = handles) {
+    const target = contextHandles.get(blockId);
+    if (!target) throw new Error(`Event target block was not found: ${blockId}`);
+    const source = target.getEventSource?.();
+    const configs = normalizeBlockEvents(source?.events).filter(config => config.event === event);
+    if (!source || !configs.length) throw new Error(`Configured event was not found: ${blockId}.${event}`);
+    eventHandles.set(source, new Map(contextHandles));
+    const results = await Promise.allSettled(configs.map(config => scheduler.invoke(config, source, payload)));
+    const failure = results.find(result => result.status === 'rejected');
+    if (failure?.status === 'rejected') throw failure.reason;
+    return results.map(result => result.status === 'fulfilled' ? result.value : undefined);
+  }
+
+  async function getBlockDataContext(excludeBlockId?: string, contextHandles = handles) {
+    const entries = await Promise.all([...contextHandles.values()]
       .filter((handle) => handle.id !== excludeBlockId)
       .map(async (handle) => [handle.id, await resolveBlockData(handle)] as const));
     return Object.fromEntries(entries);
@@ -95,14 +137,15 @@ export function createPreviewBlockRuntime(): PreviewBlockRuntime {
   async function callBlockMethod(
     blockId: string,
     methodName: string,
-    invocation: Omit<BlockMethodInvocation, 'targetBlock'>
+    invocation: Omit<BlockMethodInvocation, 'targetBlock'>,
+    contextHandles = handles
   ) {
     if (!blockId || !methodName) {
       warnRuntime('Skipped incomplete block method action.', { blockId, methodName, invocation });
       return undefined;
     }
 
-    const targetBlock = handles.get(blockId);
+    const targetBlock = contextHandles.get(blockId);
     if (!targetBlock) {
       warnRuntime('Target block was not found.', { blockId, methodName, invocation });
       return undefined;
@@ -128,27 +171,48 @@ export function createPreviewBlockRuntime(): PreviewBlockRuntime {
     });
   }
 
-  async function runActions(actions: unknown, sourceBlock: PreviewRuntimeBlock, event: unknown) {
-    await Promise.resolve();
+  async function runActions(actions: unknown, sourceBlock: PreviewRuntimeBlock, event: unknown, checkpoint?: ActionCheckpoint, eventConfig?: BlockEvent) {
+    const capturedHandles = eventHandles.get(sourceBlock) ?? new Map(handles);
+    // A lifecycle flush completes against the instances that received the event.
+    // A replacement page with the same block IDs must never receive its updates.
+    const contextHandles = () => {
+      const source = sourceBlock.id && capturedHandles.get(sourceBlock.id);
+      return source && handles.get(source.id)?.instance !== source.instance ? capturedHandles : handles;
+    };
     return await runActionGraph({
+      checkpoint,
+      controlEvent: (operation, blockId, eventName) => waitForEvent(sourceBlock, eventConfig, blockId, eventName,
+        () => scheduler.control(operation, blockId, eventName)),
+      triggerEvent: (blockId, eventName, payload) => waitForEvent(sourceBlock, eventConfig, blockId, eventName,
+        () => triggerBlockEvent(blockId, eventName, payload, contextHandles())),
       actions: actions as ActionConfig[],
       sourceBlock,
       event,
-      getBlockDataContext,
+      getBlockDataContext: () => getBlockDataContext(undefined, contextHandles()),
       callBlockMethod: (blockId, methodName, actionInvocation) => callBlockMethod(blockId, methodName, {
         sourceBlock,
         event,
+        eventConfig,
         ...(typeof actionInvocation === 'object' && actionInvocation !== null
           ? actionInvocation as Record<string, unknown>
           : {})
-      })
+      }, contextHandles())
     });
   }
 
+  const scheduler = createEventScheduler(runActions, error => {
+    warnRuntime('Action graph failed.', error);
+    void $message({ type: 'error', content: error instanceof Error ? error.message : '操作失败。' }).catch(() => undefined);
+  });
+  const visibilityChange = () => { if (document.visibilityState === 'hidden') scheduler.flushLifecycle('hidden'); };
+  let listening = false;
+
   return {
+    triggerBlockEvent,
     registerBlock(id, handle) {
       if (!id) return;
       handles.set(id, handle);
+      if (!listening && typeof document !== 'undefined') { document.addEventListener('visibilitychange', visibilityChange); listening = true; }
       notifyBlockDataChange(id);
     },
 
@@ -160,7 +224,9 @@ export function createPreviewBlockRuntime(): PreviewBlockRuntime {
         return;
       }
 
+      scheduler.flushLifecycle('unmount', id);
       handles.delete(id);
+      if (!handles.size && listening) { document.removeEventListener('visibilitychange', visibilityChange); listening = false; }
       notifyBlockDataChange(id);
     },
 
@@ -170,28 +236,9 @@ export function createPreviewBlockRuntime(): PreviewBlockRuntime {
         return undefined;
       }
 
-      try {
-        await Promise.resolve();
-        return await runActionGraph({
-          actions: eventConfig.actions,
-          sourceBlock,
-          event,
-          getBlockDataContext,
-          callBlockMethod: (blockId, methodName, actionInvocation) => callBlockMethod(blockId, methodName, {
-            sourceBlock,
-            event,
-            eventConfig,
-            ...(typeof actionInvocation === 'object' && actionInvocation !== null
-              ? actionInvocation as Record<string, unknown>
-              : {})
-          })
-        });
-      } catch (error) {
-        warnRuntime('Action graph failed.', { eventConfig, sourceBlock, error });
-        const message = error instanceof Error && error.message ? error.message : '操作失败。';
-        void $message({ type: 'error', content: message }).catch(() => undefined);
-        return undefined;
-      }
+      eventHandles.set(sourceBlock, new Map(handles));
+      try { return await scheduler.invoke(eventConfig, sourceBlock, event); }
+      catch { return undefined; } // The scheduler executes configured error/finally actions.
     },
 
     runActions,

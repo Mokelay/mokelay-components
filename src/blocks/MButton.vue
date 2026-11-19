@@ -1,5 +1,6 @@
 <script lang="ts">
 import { normalizeAction, normalizeAlign, normalizeButtonVariant, stringValue, booleanValue, type PageDslAlign, type PageDslButtonVariant } from '@/blocks/pageDslRuntime';
+import type { VariableValueConfig } from '@/runtime/variableValue';
 
 export interface MButtonProps {
   edit: boolean;
@@ -7,11 +8,12 @@ export interface MButtonProps {
   label?: string;
   variant?: PageDslButtonVariant | string;
   align?: PageDslAlign | string;
+  width?: string;
   action?: Record<string, unknown>;
-  disabled?: boolean;
+  disabled?: boolean | VariableValueConfig;
   bare?: boolean;
   visible?: boolean;
-  hidden?: boolean;
+  hidden?: boolean | VariableValueConfig;
 }
 
 const buttonDefaults = {
@@ -24,7 +26,7 @@ const buttonDefaults = {
   hidden: false
 } as const;
 
-export function normalizeButtonProps(props: Partial<MButtonProps>): MButtonProps {
+export function normalizeButtonProps(props: Partial<MButtonProps>) {
   const merged = {
     ...buttonDefaults,
     ...props
@@ -33,9 +35,10 @@ export function normalizeButtonProps(props: Partial<MButtonProps>): MButtonProps
   return {
     edit: props.edit ?? false,
     currentBlockId: stringValue(merged.currentBlockId),
-    label: stringValue(merged.label),
+    label: stringValue(merged.label, buttonDefaults.label),
     variant: normalizeButtonVariant(merged.variant),
     align: normalizeAlign(merged.align),
+    width: stringValue(merged.width),
     action: normalizeAction(merged.action),
     disabled: booleanValue(merged.disabled),
     bare: booleanValue(merged.bare),
@@ -84,14 +87,14 @@ function handleClick(event: MouseEvent) {
   <template v-if="normalizedButton.visible && !normalizedButton.hidden">
     <PageDslBlock v-if="!normalizedButton.bare" block-type="MButton">
       <div :class="buttonWrapClass">
-        <button type="button" :class="buttonClass" :disabled="normalizedButton.disabled" :data-testid="buttonTestId" @click="handleClick">
-          {{ normalizedButton.label || '提交' }}
+        <button type="button" :class="buttonClass" :style="{ width: normalizedButton.width }" :disabled="normalizedButton.disabled" :data-testid="buttonTestId" @click="handleClick">
+          {{ normalizedButton.label }}
         </button>
       </div>
     </PageDslBlock>
     <div v-else :class="buttonWrapClass">
-      <button type="button" :class="buttonClass" :disabled="normalizedButton.disabled" :data-testid="buttonTestId" @click="handleClick">
-        {{ normalizedButton.label || '提交' }}
+      <button type="button" :class="buttonClass" :style="{ width: normalizedButton.width }" :disabled="normalizedButton.disabled" :data-testid="buttonTestId" @click="handleClick">
+        {{ normalizedButton.label }}
       </button>
     </div>
   </template>

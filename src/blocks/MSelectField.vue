@@ -54,7 +54,8 @@ import { computed, ref } from 'vue';
 import PageDslBlock from '@/blocks/PageDslBlock.vue';
 import type { PageDslCallbacks } from '@/blocks/pageDslRuntime';
 
-const props = defineProps<MSelectFieldProps & PageDslCallbacks<MSelectFieldProps>>();
+const props = defineProps<MSelectFieldProps & Pick<PageDslCallbacks<MSelectFieldProps>, 'onToolChange'>>();
+const emit = defineEmits<{ (event: 'change', payload: MSelectFieldProps): void }>();
 
 const localFieldId = createPageDslFieldId();
 const selectRef = ref<HTMLSelectElement | null>(null);
@@ -88,7 +89,7 @@ function emitChange(payload: Partial<MSelectFieldProps>) {
     ...payload
   });
   props.onToolChange?.(nextPayload);
-  props.onChange?.(nextPayload);
+  emit('change', nextPayload);
 }
 
 function getData() {
@@ -108,7 +109,7 @@ defineExpose({
       <select
         ref="selectRef"
         :id="fieldId"
-        class="page-dsl-control"
+        class="page-dsl-control mk-form-control"
         :value="stringInputValue"
         :required="required"
         :disabled="disabled"
@@ -127,28 +128,5 @@ defineExpose({
 .page-dsl-field {
   display: grid;
   gap: 8px;
-}
-
-.page-dsl-control {
-  width: 100%;
-  border: 1px solid rgb(148 163 184 / 0.65);
-  border-radius: 8px;
-  padding: 9px 11px;
-  background: rgb(255 255 255);
-  color: rgb(15 23 42);
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.page-dsl-control:focus {
-  outline: none;
-  border-color: rgb(99 102 241);
-  box-shadow: 0 0 0 2px rgb(99 102 241 / 0.14);
-}
-
-.dark .page-dsl-control {
-  border-color: rgb(71 85 105);
-  background: rgb(15 23 42);
-  color: rgb(226 232 240);
 }
 </style>

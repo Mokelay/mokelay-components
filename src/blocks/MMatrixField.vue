@@ -102,7 +102,7 @@ function isMatrixSelected(rowValue: string, optionValue: string) {
             <tr v-for="row in matrixRows" :key="row.value">
               <th>{{ row.label }}</th>
               <td v-for="(option, index) in options" :key="`${row.value}-${optionValue(index)}`">
-                <input
+                <input class="mk-form-check"
                   type="radio"
                   :name="`${fieldId}-${row.value}`"
                   :value="optionValue(index)"

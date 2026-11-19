@@ -1,3 +1,4 @@
+import { UnconfirmedRequestError, type DatasourceRequestSnapshot } from '@/datasource/datasource';
 import { actionExecutors } from '@/actions/executors';
 import { selectControllerNode } from '@/actions/controllers';
 import { normalizeActions } from '@/actions/normalizer';
@@ -7,12 +8,29 @@ import type { ActionConfig, ActionContext } from '@/actions/types';
 type RuntimeBlock = ActionContext['sourceBlock'];
 
 export type RunActionGraphOptions = {
+  triggerEvent?: (blockId: string, event: string, payload?: unknown) => Promise<unknown>;
+  checkpoint?: ActionCheckpoint;
+  controlEvent?: (operation: 'flush' | 'retry', blockId: string, event: string) => Promise<unknown>;
   actions: unknown;
   sourceBlock: RuntimeBlock;
   event: unknown;
   getBlockDataContext: () => Promise<Record<string, Record<string, unknown>>>;
   callBlockMethod: (blockId: string, methodName: string, invocation: unknown) => Promise<unknown>;
 };
+
+export type ActionCheckpoint = {
+  state: ActionContext;
+  cursor: string;
+  visited: Set<string>;
+  inputs: Record<string, unknown>;
+  requestSnapshot: DatasourceRequestSnapshot;
+};
+export class ActionGraphFailure extends Error {
+  constructor(public reason: unknown, public checkpoint: ActionCheckpoint) {
+    super(reason instanceof Error ? reason.message : 'Action failed.');
+  }
+  get unconfirmed() { return this.reason instanceof UnconfirmedRequestError; }
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -63,13 +81,14 @@ export async function runActionGraph(options: RunActionGraphOptions) {
   if (!actions.length) return undefined;
 
   const actionMap = new Map(actions.map((action) => [action.uuid, action]));
-  const state = createBaseContext(
+  const state = options.checkpoint?.state ?? createBaseContext(
     options.sourceBlock,
     options.event,
     await options.getBlockDataContext()
   );
-  const visited = new Set<string>();
-  let currentActionUuid: string | null = actions[0].uuid;
+  const visited = new Set(options.checkpoint?.visited);
+  let currentActionUuid: string | null = options.checkpoint?.cursor ?? actions[0].uuid;
+  let resume = options.checkpoint;
 
   while (currentActionUuid) {
     if (visited.has(currentActionUuid)) {
@@ -82,8 +101,11 @@ export async function runActionGraph(options: RunActionGraphOptions) {
       throw new Error(`Action graph points to missing action: ${currentActionUuid}.`);
     }
 
-    state.blocks = await options.getBlockDataContext();
-    const inputs = normalizeInputs(resolveActionTemplates(config.inputs ?? {}, state));
+    const liveBlocks = await options.getBlockDataContext();
+    state.blocks = { ...state.blocks, ...liveBlocks };
+    const inputs = resume?.inputs ?? normalizeInputs(resolveActionTemplates(config.inputs ?? {}, state));
+    const requestSnapshot = resume?.requestSnapshot ?? {};
+    resume = undefined;
     state.actions[config.uuid] = {
       inputs,
       outputs: {}
@@ -100,13 +122,18 @@ export async function runActionGraph(options: RunActionGraphOptions) {
       throw new Error(`Unsupported action: ${config.action}`);
     }
 
-    const outputs = await executor({
-      config,
-      inputs,
-      state,
-      callBlockMethod: options.callBlockMethod
-    });
-    state.actions[config.uuid].outputs = normalizeOutputs(outputs, config.outputs);
+    try {
+      const outputs = await executor({
+        config, inputs, state, requestSnapshot,
+        controlEvent: options.controlEvent,
+        triggerEvent: options.triggerEvent,
+        callBlockMethod: options.callBlockMethod
+      });
+      state.actions[config.uuid].outputs = normalizeOutputs(outputs, config.outputs);
+    } catch (reason) {
+      visited.delete(config.uuid);
+      throw new ActionGraphFailure(reason, { state, cursor: config.uuid, visited, inputs, requestSnapshot });
+    }
     currentActionUuid = nextActionValue(config.nextAction);
   }
 

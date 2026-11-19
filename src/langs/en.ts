@@ -282,7 +282,9 @@ export const enMessages = {
     toolboxTitle: 'Component Selector',
     placeholder: 'Select a component'
   },
+  richText: { boundContent: 'Dynamic content (resolved at runtime)' },
   form: {
+    validation: { required: '{label} is required.', pattern: 'Please check {label}.' },
     toolboxTitle: 'Form',
     propertyPanelTitle: 'Form Properties',
     placeholder: 'Add a form item',

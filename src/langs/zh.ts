@@ -282,7 +282,9 @@ export const zhMessages = {
     toolboxTitle: '组件选择器',
     placeholder: '选择组件'
   },
+  richText: { boundContent: '动态内容（运行时显示绑定值）' },
   form: {
+    validation: { required: '请填写{label}。', pattern: '请检查{label}。' },
     toolboxTitle: '表单',
     propertyPanelTitle: '表单属性',
     placeholder: '添加表单项',

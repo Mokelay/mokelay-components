@@ -81,7 +81,14 @@ export interface MDatasourceApiObject {
 
 export type MDatasourceObject = MDatasourceJsonObject | MDatasourceApiObject;
 
+export class UnconfirmedRequestError extends Error {
+  constructor(message: string) { super(message); this.name = 'UnconfirmedRequestError'; }
+}
+
+export type DatasourceRequestSnapshot = { url?: string; init?: RequestInit };
+
 export type DatasourceRequestOptions = {
+  requestSnapshot?: DatasourceRequestSnapshot;
   bodyFiles?: Record<number, File>;
   variableContext?: VariableValueResolveContext;
 };
@@ -523,12 +530,19 @@ export const $remote: RemoteFunction = async (value, options) => {
     return cloneJsonValue(datasource.rawData);
   }
 
-  const response = await fetch(await getResolvedDatasourceRequestUrl(datasource, options?.variableContext), {
-    method: datasource.method,
-    headers: getDatasourceRequestHeaders(datasource, options?.variableContext),
-    body: getDatasourceRequestBody(datasource, options),
-    ...(datasource.domain === DEFAULT_API_DOMAIN_UUID ? { credentials: 'include' as const } : {})
-  });
+  const snapshot = options?.requestSnapshot ?? {};
+  if (!snapshot.url) {
+    snapshot.url = await getResolvedDatasourceRequestUrl(datasource, options?.variableContext);
+    snapshot.init = {
+      method: datasource.method,
+      headers: getDatasourceRequestHeaders(datasource, options?.variableContext),
+      body: getDatasourceRequestBody(datasource, options),
+      ...(datasource.domain === DEFAULT_API_DOMAIN_UUID ? { credentials: 'include' as const } : {})
+    };
+  }
+  let response: Response;
+  try { response = await fetch(snapshot.url, snapshot.init); }
+  catch (error) { throw new UnconfirmedRequestError(error instanceof Error ? error.message : 'Network request failed.'); }
 
   if (!response.ok) {
     throw new DatasourceError(
@@ -541,7 +555,8 @@ export const $remote: RemoteFunction = async (value, options) => {
     );
   }
 
-  return await readDatasourceJsonResponse(response);
+  try { return await readDatasourceJsonResponse(response); }
+  catch (error) { throw new UnconfirmedRequestError(error instanceof Error ? error.message : 'Response could not be read.'); }
 };
 
 export const $schema: SchemaFunction = async (value, options) => {
