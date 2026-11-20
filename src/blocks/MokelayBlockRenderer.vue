@@ -200,9 +200,7 @@ function getBlockProps(block: MokelayBlock) {
       edit: false,
       currentBlockId
     }) ?? { ...data, edit: false, currentBlockId }),
-    currentBlockId,
-    onChange: handleRuntimeChange,
-    onToolChange: notifyRuntimeValueChange
+    currentBlockId
   };
 }
 
@@ -307,7 +305,12 @@ function createEventSource(): PreviewRuntimeBlock {
 }
 
 const blockEventListeners = computed(() => {
-  const listeners: Record<string, (event: unknown) => void> = {};
+  // Keep callbacks callable: v-bind(onChange) + v-on(change) makes Vue merge
+  // them into an array, which callback-based Blocks cannot invoke directly.
+  const listeners: Record<string, (event: unknown) => void> = {
+    change: handleRuntimeChange,
+    toolChange: notifyRuntimeValueChange
+  };
   const events = normalizeBlockEvents(resolveBlockRuntimeValue(props.block.events));
 
   events.forEach((eventConfig) => {
