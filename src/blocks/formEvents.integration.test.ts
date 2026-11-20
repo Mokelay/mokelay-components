@@ -39,7 +39,7 @@ it.skipIf(!page).each(['no', 'yes'])('runs the reimbursement DSL with restored h
   try {
     await flushPromises();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(wrapper.get('[data-testid=page-dsl-block-MHeading]').text()).toBe('201.报销申请');
+    expect(wrapper.get('[data-testid=page-dsl-block-MHeading]').text()).toBe('报销申请');
     expect(wrapper.get('[data-testid=page-dsl-block-MRichText]').text()).toBe('将自动保存填写内容');
     expect(wrapper.getComponent({ name: 'MForm' }).find('header, h1').exists()).toBe(false);
     expect(wrapper.get('output#expense-approval_amount').text()).toBe('0');
