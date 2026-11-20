@@ -12,7 +12,7 @@ import { preloadMokelayBlocks } from './runtimeRegistry';
 import MokelayBlockRenderer from './MokelayBlockRenderer.vue';
 import type { MokelayBlock } from './types';
 
-const pageFile = resolve(process.cwd(), '../mokelay-server/server/assets/lark/pages/reimbursement_201.json');
+const pageFile = resolve(process.cwd(), '../mokelay-server/server/assets/lark/pages/reimbursement.json');
 const page = existsSync(pageFile) ? JSON.parse(readFileSync(pageFile, 'utf8')) : undefined;
 afterEach(() => { vi.unstubAllGlobals(); configureMokelayComponents({}); });
 
@@ -64,10 +64,10 @@ it.skipIf(!page).each(['no', 'yes'])('runs the reimbursement DSL with restored h
     await button.trigger('click'); await button.trigger('click');
     await flushPromises();
     expect(writes.map(write => [write.url.split('/').pop(), write.body.version, write.body.note])).toEqual([
-      ['reimbursement_201_save_draft', 0, 'first'],
-      ['reimbursement_201_save_draft', 0, 'first'],
-      ['reimbursement_201_save_draft', 1, 'latest'],
-      ['reimbursement_201_submit', 2, 'latest']
+      ['reimbursement_save_draft', 0, 'first'],
+      ['reimbursement_save_draft', 0, 'first'],
+      ['reimbursement_save_draft', 1, 'latest'],
+      ['reimbursement_submit', 2, 'latest']
     ]);
     expect(writes[1].body).toEqual(writes[0].body);
     expect(wrapper.text()).toContain('已提交 · 申请单号 test-id');
